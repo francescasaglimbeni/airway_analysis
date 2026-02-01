@@ -1192,12 +1192,32 @@ class AirwayGraphAnalyzer:
         # NOTA: Threshold abbassato da >15 a >10 per includere più periferia
         #       Nei pazienti con fibrosi, la periferia può essere molto ridotta
         
+        # ADAPTIVE THRESHOLD: Se non ci sono branch > 10, usa una soglia più bassa
+        max_generation = self.branch_metrics_df['generation'].max()
+        peripheral_threshold = 10
+        
+        # Prova prima con threshold standard (>10)
+        peripheral_branches = self.branch_metrics_df[self.branch_metrics_df['generation'] > 10]
+        
+        # Se nessun branch periferico con threshold standard, usa soglia adattiva
+        if len(peripheral_branches) == 0 or len(peripheral_branches) < 5:
+            if max_generation > 8:
+                peripheral_threshold = 8
+                print(f"  ⚠ Using adaptive threshold: gen > {peripheral_threshold} (max gen = {max_generation:.0f})")
+            elif max_generation > 7:
+                peripheral_threshold = 7
+                print(f"  ⚠ Using adaptive threshold: gen > {peripheral_threshold} (max gen = {max_generation:.0f})")
+            else:
+                peripheral_threshold = 7
+                print(f"  ⚠ Very limited airway tree: gen > {peripheral_threshold} (max gen = {max_generation:.0f})")
+        
+        # Riclassifica con threshold adattivo
         central_branches = self.branch_metrics_df[self.branch_metrics_df['generation'] <= 7]
         intermediate_branches = self.branch_metrics_df[
             (self.branch_metrics_df['generation'] > 7) & 
-            (self.branch_metrics_df['generation'] <= 10)
+            (self.branch_metrics_df['generation'] <= peripheral_threshold)
         ]
-        peripheral_branches = self.branch_metrics_df[self.branch_metrics_df['generation'] > 10]
+        peripheral_branches = self.branch_metrics_df[self.branch_metrics_df['generation'] > peripheral_threshold]
         
         central_volume = central_branches['volume_mm3'].sum()
         intermediate_volume = intermediate_branches['volume_mm3'].sum()
@@ -1227,10 +1247,10 @@ class AirwayGraphAnalyzer:
         print(f"  Central airways (gen 0-7):")
         print(f"    Volume: {central_volume:.2f} mm³")
         print(f"    Branches: {len(central_branches)}")
-        print(f"  Intermediate airways (gen 8-10):")
+        print(f"  Intermediate airways (gen 8-{peripheral_threshold}):")
         print(f"    Volume: {intermediate_volume:.2f} mm³")
         print(f"    Branches: {len(intermediate_branches)}")
-        print(f"  Peripheral airways (gen >10):")
+        print(f"  Peripheral airways (gen >{peripheral_threshold}):")
         print(f"    Volume: {peripheral_volume:.2f} mm³")
         print(f"    Branches: {len(peripheral_branches)}")
         print(f"  Peripheral/Central volume ratio: {p_c_ratio:.3f}")

@@ -572,7 +572,7 @@ def main():
     # Save interpolated data
     fvc_output = OUTPUT_DIR / "interpolated_fvc_data.csv"
     fvc_df.to_csv(fvc_output, index=False)
-    print(f"\n✓ Interpolated FVC data saved: {fvc_output}")
+    print(f"\nOK Interpolated FVC data saved: {fvc_output}")
     
     # Load airway metrics
     reliable = load_validation_results()
