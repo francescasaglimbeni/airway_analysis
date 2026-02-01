@@ -20,6 +20,9 @@ def compute_aggregate_metrics(results_df):
     models = {
         'MLP (multi-feature)': results_df['mlp_pred'].values,
         'LR (multi-feature)': results_df['lr_multi_pred'].values,
+        'Ridge (L2 reg, α=1.0)': results_df['ridge_pred'].values,
+        'Lasso (L1 reg, α=0.1)': results_df['lasso_pred'].values,
+        'Random Forest': results_df['rf_pred'].values,
         'LR (best single)': results_df['best_single_pred'].values,
     }
     

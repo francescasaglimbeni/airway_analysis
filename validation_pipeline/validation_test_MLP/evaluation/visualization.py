@@ -49,16 +49,20 @@ def plot_all_results(results_df, importances, fold_curves, output_dir, features)
 
 
 def plot_actual_vs_predicted(results_df, output_dir):
-    """Scatter: actual vs predicted per MLP e LR multi-feature."""
-    fig, axes = plt.subplots(1, 2, figsize=(16, 7))
+    """Scatter: actual vs predicted per tutti i modelli."""
+    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
     fig.suptitle('FVC% Week 52 — Actual vs Predicted (LOOCV)',
-                 fontsize=15, fontweight='bold', y=1.02)
+                 fontsize=16, fontweight='bold', y=0.995)
     
     actual = results_df['actual'].values
     
     configs = [
-        ('mlp_pred', 'MLP (multi-feature)', 'steelblue', axes[0]),
-        ('lr_multi_pred', 'LR  (multi-feature)', 'coral', axes[1]),
+        ('mlp_pred', 'MLP (multi-feature)\n[Deep Learning]', 'steelblue', axes[0, 0]),
+        ('lr_multi_pred', 'Linear Regression\n[No Regularization]', 'coral', axes[0, 1]),
+        ('ridge_pred', 'Ridge Regression\n[L2 reg, α=1.0]', 'forestgreen', axes[0, 2]),
+        ('lasso_pred', 'Lasso Regression\n[L1 reg, α=0.1]', 'purple', axes[1, 0]),
+        ('rf_pred', 'Random Forest\n[n=100, depth=3]', 'darkorange', axes[1, 1]),
+        ('best_single_pred', 'Best Single Feature\n[Linear]', 'gray', axes[1, 2]),
     ]
     
     for col, title, color, ax in configs:
@@ -102,16 +106,20 @@ def plot_actual_vs_predicted(results_df, output_dir):
 
 
 def plot_bland_altman(results_df, output_dir):
-    """Bland-Altman per MLP e LR multi-feature."""
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    """Bland-Altman per tutti i modelli."""
+    fig, axes = plt.subplots(2, 3, figsize=(18, 11))
     fig.suptitle('Bland-Altman: Predicted − Actual  (LOOCV)',
-                 fontsize=15, fontweight='bold')
+                 fontsize=16, fontweight='bold', y=0.995)
     
     actual = results_df['actual'].values
     
     configs = [
-        ('mlp_pred', 'MLP (multi-feature)', 'steelblue', axes[0]),
-        ('lr_multi_pred', 'LR  (multi-feature)', 'coral', axes[1]),
+        ('mlp_pred', 'MLP', 'steelblue', axes[0, 0]),
+        ('lr_multi_pred', 'Linear Regression', 'coral', axes[0, 1]),
+        ('ridge_pred', 'Ridge (L2)', 'forestgreen', axes[0, 2]),
+        ('lasso_pred', 'Lasso (L1)', 'purple', axes[1, 0]),
+        ('rf_pred', 'Random Forest', 'darkorange', axes[1, 1]),
+        ('best_single_pred', 'Best Single', 'gray', axes[1, 2]),
     ]
     
     for col, title, color, ax in configs:
@@ -156,13 +164,19 @@ def plot_per_patient_errors(results_df, output_dir):
     df = results_df.sort_values('mlp_error', key=lambda x: abs(x), ascending=True).copy()
     y_pos = np.arange(len(df))
     
-    fig, ax = plt.subplots(figsize=(12, max(7, len(df)*0.35)))
+    fig, ax = plt.subplots(figsize=(14, max(8, len(df)*0.4)))
     
-    bar_h = 0.28
-    ax.barh(y_pos + bar_h, df['mlp_error'], height=bar_h*1.8,
-            color='steelblue', alpha=0.75, label='MLP (multi-feature)', edgecolor='black', linewidth=0.5)
-    ax.barh(y_pos - bar_h, df['lr_multi_error'], height=bar_h*1.8,
-            color='coral', alpha=0.75, label='LR  (multi-feature)', edgecolor='black', linewidth=0.5)
+    bar_h = 0.14
+    ax.barh(y_pos + 2*bar_h, df['mlp_error'], height=bar_h*1.6,
+            color='steelblue', alpha=0.75, label='MLP', edgecolor='black', linewidth=0.4)
+    ax.barh(y_pos + bar_h, df['lr_multi_error'], height=bar_h*1.6,
+            color='coral', alpha=0.75, label='Linear Reg', edgecolor='black', linewidth=0.4)
+    ax.barh(y_pos, df['ridge_error'], height=bar_h*1.6,
+            color='forestgreen', alpha=0.75, label='Ridge', edgecolor='black', linewidth=0.4)
+    ax.barh(y_pos - bar_h, df['lasso_error'], height=bar_h*1.6,
+            color='purple', alpha=0.75, label='Lasso', edgecolor='black', linewidth=0.4)
+    ax.barh(y_pos - 2*bar_h, df['rf_error'], height=bar_h*1.6,
+            color='darkorange', alpha=0.75, label='Random Forest', edgecolor='black', linewidth=0.4)
     
     ax.axvline(0, color='black', linewidth=1)
     ax.set_yticks(y_pos)

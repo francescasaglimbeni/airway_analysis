@@ -30,9 +30,9 @@ FEATURES = [
     'histogram_entropy',
     'volume_ml',
     'mean_tortuosity',
-    'std_peripheral_diameter_mm',
-    'central_to_peripheral_diameter_ratio',
-    'mean_peripheral_branch_volume_mm3',
+    # 'std_peripheral_diameter_mm',
+    # 'central_to_peripheral_diameter_ratio',
+    # 'mean_peripheral_branch_volume_mm3',
 ]
 
 TARGET = 'FVC_percent_week52'
@@ -44,7 +44,7 @@ DROPOUT = 0.2
 LEARNING_RATE = 1e-3
 WEIGHT_DECAY = 1e-4    # L2 regularization nell'ottimizzatore
 EPOCHS_MAX = 500
-PATIENCE = 50          # early stopping sulla val loss
+PATIENCE = 100         # early stopping aumentato per piccoli dataset
 
 # Split interno
 VAL_FRACTION = 0.20    # ~5 pazienti per val

@@ -4,7 +4,8 @@ Funzioni per split dati e LOOCV
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.ensemble import RandomForestRegressor
 
 from models.train_utils import train_mlp, predict_mlp
 from evaluation.baselines import run_linear_baselines
@@ -56,9 +57,32 @@ def run_loocv(df, features, target, device, config):
         X_pool_scaled_base = scaler_base.fit_transform(X_pool)
         X_test_scaled_base = scaler_base.transform(X_test)
         
+        # Linear Regression (no regularization)
         lr_full = LinearRegression()
         lr_full.fit(X_pool_scaled_base, y_pool)
         lr_multi_pred = lr_full.predict(X_test_scaled_base)[0]
+        
+        # Ridge Regression (L2 regularization)
+        ridge = Ridge(alpha=1.0, random_state=config['seed'])
+        ridge.fit(X_pool_scaled_base, y_pool)
+        ridge_pred = ridge.predict(X_test_scaled_base)[0]
+        
+        # Lasso Regression (L1 regularization)
+        lasso = Lasso(alpha=0.1, random_state=config['seed'], max_iter=5000)
+        lasso.fit(X_pool_scaled_base, y_pool)
+        lasso_pred = lasso.predict(X_test_scaled_base)[0]
+        
+        # Random Forest Regressor
+        rf = RandomForestRegressor(
+            n_estimators=100,
+            max_depth=3,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            random_state=config['seed'],
+            n_jobs=-1
+        )
+        rf.fit(X_pool_scaled_base, y_pool)
+        rf_pred = rf.predict(X_test_scaled_base)[0]
         
         # Single-feature baselines (non normalizzate)
         single_baselines = run_linear_baselines(
@@ -145,17 +169,23 @@ def run_loocv(df, features, target, device, config):
             'actual': actual,
             'mlp_pred': best_mlp_pred,
             'lr_multi_pred': lr_multi_pred,
+            'ridge_pred': ridge_pred,
+            'lasso_pred': lasso_pred,
+            'rf_pred': rf_pred,
             'best_single_feature': best_single_feature,
             'best_single_pred': best_single_pred,
             'mlp_error': best_mlp_pred - actual if best_mlp_pred is not None else np.nan,
             'lr_multi_error': lr_multi_pred - actual,
+            'ridge_error': ridge_pred - actual,
+            'lasso_error': lasso_pred - actual,
+            'rf_error': rf_pred - actual,
             'best_single_error': best_single_pred - actual if not np.isnan(best_single_pred) else np.nan,
             'mlp_val_mae': best_mlp_val_mae,
         })
         
         mlp_err = results[-1]['mlp_error']
-        print(f"  | actual={actual:6.1f} | MLP={best_mlp_pred:6.1f} (err={mlp_err:+.1f}) | "
-              f"LR_multi={lr_multi_pred:6.1f} | val_mae={best_mlp_val_mae:.2f}")
+        print(f"  | actual={actual:6.1f} | MLP={best_mlp_pred:6.1f} | "
+              f"Ridge={ridge_pred:6.1f} | Lasso={lasso_pred:6.1f} | RF={rf_pred:6.1f}")
     
     results_df = pd.DataFrame(results)
     return results_df, all_importances, fold_curves
