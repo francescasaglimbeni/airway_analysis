@@ -12,7 +12,7 @@ from evaluation.metrics import compute_aggregate_metrics
 from evaluation.visualization import plot_all_results
 from utils.io_utils import save_results
 
-INPUT_CSV = Path(r"X:\Francesca Saglimbeni\tesi\results\FVC_prediction_results\improved_prediction_old\quality_filtered_dataset.csv"
+INPUT_CSV = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\improved_prediction\quality_balanced_dataset.csv"
 )
 
 OUTPUT_DIR = Path(
@@ -23,13 +23,12 @@ OUTPUT_DIR = Path(
 
 # Feature esatte usate in improved_fvc_prediction.py
 FEATURES = [
+    'mean_peripheral_branch_volume_mm3',
+    'peripheral_branch_density',
+    'mean_peripheral_diameter_mm',
+    'central_to_peripheral_diameter_ratio',
     'mean_lung_density_HU',
     'histogram_entropy',
-    'volume_ml',
-    'mean_tortuosity',
-    # 'std_peripheral_diameter_mm',
-    # 'central_to_peripheral_diameter_ratio',
-    # 'mean_peripheral_branch_volume_mm3',
 ]
 
 TARGET = 'FVC_percent_week52'

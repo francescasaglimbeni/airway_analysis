@@ -685,11 +685,10 @@ def integrate_airway_and_fvc_balanced(reliable_cases, fvc_df, quality_level='hig
             'week52_method': patient_fvc['week52_method'],
             
             # Airway metrics
-            'volume_ml': case_row['volume_ml'],
-            'mean_tortuosity': advanced.get('mean_tortuosity'),
-            'std_peripheral_diameter_mm': advanced.get('std_peripheral_diameter_mm'),
-            'central_to_peripheral_diameter_ratio': advanced.get('central_to_peripheral_diameter_ratio'),
             'mean_peripheral_branch_volume_mm3': advanced.get('mean_peripheral_branch_volume_mm3'),
+            'peripheral_branch_density': advanced.get('peripheral_branch_density'),
+            'mean_peripheral_diameter_mm': advanced.get('mean_peripheral_diameter_mm'),
+            'central_to_peripheral_diameter_ratio': advanced.get('central_to_peripheral_diameter_ratio'),
         }
         
         # Add parenchymal metrics
@@ -776,11 +775,10 @@ def main():
     
     # Define features to analyze
     features = [
-        'volume_ml',
-        'mean_tortuosity',
-        'std_peripheral_diameter_mm',
-        'central_to_peripheral_diameter_ratio',
         'mean_peripheral_branch_volume_mm3',
+        'peripheral_branch_density',
+        'mean_peripheral_diameter_mm',
+        'central_to_peripheral_diameter_ratio',
         'mean_lung_density_HU',
         'histogram_entropy'
     ]
