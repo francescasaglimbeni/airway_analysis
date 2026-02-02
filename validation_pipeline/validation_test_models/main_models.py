@@ -12,10 +12,7 @@ from evaluation.metrics import compute_aggregate_metrics
 from evaluation.visualization import plot_all_results
 from utils.io_utils import save_results
 
-INPUT_CSV = Path(
-    r"X:\Francesca Saglimbeni\tesi\vesselsegmentation"
-    r"\validation_pipeline\OSIC_metrics_validation"
-    r"\improved_prediction\quality_filtered_dataset.csv"
+INPUT_CSV = Path(r"X:\Francesca Saglimbeni\tesi\results\FVC_prediction_results\improved_prediction_old\quality_filtered_dataset.csv"
 )
 
 OUTPUT_DIR = Path(
