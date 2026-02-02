@@ -39,8 +39,17 @@ def load_and_preprocess_data(input_path, features, target):
     if target not in df.columns:
         raise ValueError(f"Target '{target}' non trovato nel dataset")
     
-    # Seleziona colonne necessarie
+    # Seleziona colonne necessarie (incluse le colonne di qualità)
     required_columns = features + [target, 'patient']
+    
+    # Aggiungi colonne di qualità se esistono
+    quality_columns = []
+    if 'week0_quality' in df.columns:
+        quality_columns.append('week0_quality')
+    if 'week52_quality' in df.columns:
+        quality_columns.append('week52_quality')
+    
+    required_columns += quality_columns
     df_clean = df[required_columns].copy()
     
     # Rimuovi righe con NaN

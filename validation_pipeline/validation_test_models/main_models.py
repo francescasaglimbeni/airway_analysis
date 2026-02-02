@@ -21,7 +21,7 @@ INPUT_CSV = Path(
 OUTPUT_DIR = Path(
     r"X:\Francesca Saglimbeni\tesi\vesselsegmentation"
     r"\validation_pipeline"
-    r"\validation_test_MLP\FVC_prediction_results"
+    r"\validation_test_models\FVC_prediction_results"
 )
 
 # Feature esatte usate in improved_fvc_prediction.py

@@ -50,18 +50,19 @@ def plot_all_results(results_df, importances, fold_curves, output_dir, features)
 
 def plot_actual_vs_predicted(results_df, output_dir):
     """Scatter: actual vs predicted per tutti i modelli."""
-    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+    fig, axes = plt.subplots(2, 4, figsize=(20, 10))
     fig.suptitle('FVC% Week 52 — Actual vs Predicted (LOOCV)',
                  fontsize=16, fontweight='bold', y=0.995)
     
     actual = results_df['actual'].values
     
     configs = [
-        ('mlp_pred', 'MLP (multi-feature)\n[Deep Learning]', 'steelblue', axes[0, 0]),
-        ('lr_multi_pred', 'Linear Regression\n[No Regularization]', 'coral', axes[0, 1]),
-        ('ridge_pred', 'Ridge Regression\n[L2 reg, α=1.0]', 'forestgreen', axes[0, 2]),
-        ('lasso_pred', 'Lasso Regression\n[L1 reg, α=0.1]', 'purple', axes[1, 0]),
-        ('rf_pred', 'Random Forest\n[n=100, depth=3]', 'darkorange', axes[1, 1]),
+        ('ensemble_pred', '⭐ Ensemble\n(Ridge 60% + RF 40%)', 'darkviolet', axes[0, 0]),
+        ('ridge_pred', 'Ridge Regression\n[L2 reg, tuned α]', 'forestgreen', axes[0, 1]),
+        ('rf_pred', 'Random Forest\n[n=100, depth=3]', 'darkorange', axes[0, 2]),
+        ('lasso_pred', 'Lasso Regression\n[L1 reg, α=0.1]', 'purple', axes[0, 3]),
+        ('lr_multi_pred', 'Linear Regression\n[No Regularization]', 'coral', axes[1, 0]),
+        ('mlp_pred', 'MLP (multi-feature)\n[Deep Learning - FAILURE]', 'steelblue', axes[1, 1]),
         ('best_single_pred', 'Best Single Feature\n[Linear]', 'gray', axes[1, 2]),
     ]
     
@@ -99,6 +100,9 @@ def plot_actual_vs_predicted(results_df, output_dir):
         ax.set_aspect('equal')
         ax.grid(True, alpha=0.3)
     
+    # Nascondi l'ultimo subplot (7 modelli in griglia 2x4)
+    axes[1, 3].axis('off')
+    
     plt.tight_layout()
     plt.savefig(output_dir / 'plot_actual_vs_predicted.png', bbox_inches='tight')
     plt.close()
@@ -107,18 +111,19 @@ def plot_actual_vs_predicted(results_df, output_dir):
 
 def plot_bland_altman(results_df, output_dir):
     """Bland-Altman per tutti i modelli."""
-    fig, axes = plt.subplots(2, 3, figsize=(18, 11))
+    fig, axes = plt.subplots(2, 4, figsize=(20, 10))
     fig.suptitle('Bland-Altman: Predicted − Actual  (LOOCV)',
                  fontsize=16, fontweight='bold', y=0.995)
     
     actual = results_df['actual'].values
     
     configs = [
-        ('mlp_pred', 'MLP', 'steelblue', axes[0, 0]),
-        ('lr_multi_pred', 'Linear Regression', 'coral', axes[0, 1]),
-        ('ridge_pred', 'Ridge (L2)', 'forestgreen', axes[0, 2]),
-        ('lasso_pred', 'Lasso (L1)', 'purple', axes[1, 0]),
-        ('rf_pred', 'Random Forest', 'darkorange', axes[1, 1]),
+        ('ensemble_pred', '⭐ Ensemble', 'darkviolet', axes[0, 0]),
+        ('ridge_pred', 'Ridge (tuned)', 'forestgreen', axes[0, 1]),
+        ('rf_pred', 'Random Forest', 'darkorange', axes[0, 2]),
+        ('lasso_pred', 'Lasso (L1)', 'purple', axes[0, 3]),
+        ('lr_multi_pred', 'Linear Regression', 'coral', axes[1, 0]),
+        ('mlp_pred', 'MLP', 'steelblue', axes[1, 1]),
         ('best_single_pred', 'Best Single', 'gray', axes[1, 2]),
     ]
     
@@ -153,6 +158,9 @@ def plot_bland_altman(results_df, output_dir):
         ax.legend(fontsize=9, loc='best')
         ax.grid(True, alpha=0.3)
     
+    # Nascondi l'ultimo subplot
+    axes[1, 3].axis('off')
+    
     plt.tight_layout()
     plt.savefig(output_dir / 'plot_bland_altman.png', bbox_inches='tight')
     plt.close()
@@ -164,19 +172,21 @@ def plot_per_patient_errors(results_df, output_dir):
     df = results_df.sort_values('mlp_error', key=lambda x: abs(x), ascending=True).copy()
     y_pos = np.arange(len(df))
     
-    fig, ax = plt.subplots(figsize=(14, max(8, len(df)*0.4)))
+    fig, ax = plt.subplots(figsize=(15, max(9, len(df)*0.45)))
     
-    bar_h = 0.14
-    ax.barh(y_pos + 2*bar_h, df['mlp_error'], height=bar_h*1.6,
-            color='steelblue', alpha=0.75, label='MLP', edgecolor='black', linewidth=0.4)
-    ax.barh(y_pos + bar_h, df['lr_multi_error'], height=bar_h*1.6,
-            color='coral', alpha=0.75, label='Linear Reg', edgecolor='black', linewidth=0.4)
-    ax.barh(y_pos, df['ridge_error'], height=bar_h*1.6,
+    bar_h = 0.12
+    ax.barh(y_pos + 3*bar_h, df['ensemble_error'], height=bar_h*1.5,
+            color='darkviolet', alpha=0.85, label='⭐ Ensemble', edgecolor='black', linewidth=0.4)
+    ax.barh(y_pos + 2*bar_h, df['ridge_error'], height=bar_h*1.5,
             color='forestgreen', alpha=0.75, label='Ridge', edgecolor='black', linewidth=0.4)
-    ax.barh(y_pos - bar_h, df['lasso_error'], height=bar_h*1.6,
-            color='purple', alpha=0.75, label='Lasso', edgecolor='black', linewidth=0.4)
-    ax.barh(y_pos - 2*bar_h, df['rf_error'], height=bar_h*1.6,
+    ax.barh(y_pos + bar_h, df['rf_error'], height=bar_h*1.5,
             color='darkorange', alpha=0.75, label='Random Forest', edgecolor='black', linewidth=0.4)
+    ax.barh(y_pos, df['lr_multi_error'], height=bar_h*1.5,
+            color='coral', alpha=0.75, label='Linear Reg', edgecolor='black', linewidth=0.4)
+    ax.barh(y_pos - bar_h, df['lasso_error'], height=bar_h*1.5,
+            color='purple', alpha=0.75, label='Lasso', edgecolor='black', linewidth=0.4)
+    ax.barh(y_pos - 2*bar_h, df['mlp_error'], height=bar_h*1.5,
+            color='steelblue', alpha=0.75, label='MLP', edgecolor='black', linewidth=0.4)
     
     ax.axvline(0, color='black', linewidth=1)
     ax.set_yticks(y_pos)

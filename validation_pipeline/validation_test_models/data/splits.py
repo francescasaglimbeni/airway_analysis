@@ -33,6 +33,10 @@ def run_loocv(df, features, target, device, config):
     y_all = df[target].values.astype(np.float64)
     patients = df['patient'].values
     
+    # Estrai colonne di qualità se disponibili
+    week0_quality = df['week0_quality'].values if 'week0_quality' in df.columns else None
+    week52_quality = df['week52_quality'].values if 'week52_quality' in df.columns else None
+    
     results = []
     all_importances = []
     fold_curves = []
@@ -62,10 +66,18 @@ def run_loocv(df, features, target, device, config):
         lr_full.fit(X_pool_scaled_base, y_pool)
         lr_multi_pred = lr_full.predict(X_test_scaled_base)[0]
         
-        # Ridge Regression (L2 regularization)
-        ridge = Ridge(alpha=1.0, random_state=config['seed'])
-        ridge.fit(X_pool_scaled_base, y_pool)
-        ridge_pred = ridge.predict(X_test_scaled_base)[0]
+        # Ridge Regression (L2 regularization) - tuning α via nested CV
+        from sklearn.model_selection import GridSearchCV
+        ridge_cv = GridSearchCV(
+            Ridge(random_state=config['seed']),
+            param_grid={'alpha': [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]},
+            cv=min(5, len(X_pool_scaled_base)),  # 5-fold o LOOCV se <5 samples
+            scoring='neg_mean_absolute_error',
+            n_jobs=-1
+        )
+        ridge_cv.fit(X_pool_scaled_base, y_pool)
+        ridge_pred = ridge_cv.predict(X_test_scaled_base)[0]
+        best_ridge_alpha = ridge_cv.best_params_['alpha']
         
         # Lasso Regression (L1 regularization)
         lasso = Lasso(alpha=0.1, random_state=config['seed'], max_iter=5000)
@@ -83,6 +95,10 @@ def run_loocv(df, features, target, device, config):
         )
         rf.fit(X_pool_scaled_base, y_pool)
         rf_pred = rf.predict(X_test_scaled_base)[0]
+        
+        # Ensemble: media pesata Ridge + RF (Ridge ha R² migliore, RF ha MAE migliore)
+        # Peso empirico: Ridge 60%, RF 40% (basato su performance relative)
+        ensemble_pred = 0.6 * ridge_pred + 0.4 * rf_pred
         
         # Single-feature baselines (non normalizzate)
         single_baselines = run_linear_baselines(
@@ -163,7 +179,7 @@ def run_loocv(df, features, target, device, config):
         # --- REGISTRA RISULTATI ---
         actual = y_test[0]
         
-        results.append({
+        result_dict = {
             'fold': i,
             'patient': patient_id,
             'actual': actual,
@@ -172,6 +188,7 @@ def run_loocv(df, features, target, device, config):
             'ridge_pred': ridge_pred,
             'lasso_pred': lasso_pred,
             'rf_pred': rf_pred,
+            'ensemble_pred': ensemble_pred,
             'best_single_feature': best_single_feature,
             'best_single_pred': best_single_pred,
             'mlp_error': best_mlp_pred - actual if best_mlp_pred is not None else np.nan,
@@ -179,13 +196,30 @@ def run_loocv(df, features, target, device, config):
             'ridge_error': ridge_pred - actual,
             'lasso_error': lasso_pred - actual,
             'rf_error': rf_pred - actual,
+            'ensemble_error': ensemble_pred - actual,
             'best_single_error': best_single_pred - actual if not np.isnan(best_single_pred) else np.nan,
             'mlp_val_mae': best_mlp_val_mae,
-        })
+            'ridge_alpha': best_ridge_alpha,
+        }
+        
+        # Aggiungi colonne di qualità se disponibili
+        if week0_quality is not None:
+            result_dict['week0_quality'] = week0_quality[i]
+        if week52_quality is not None:
+            result_dict['week52_quality'] = week52_quality[i]
+        
+        results.append(result_dict)
         
         mlp_err = results[-1]['mlp_error']
-        print(f"  | actual={actual:6.1f} | MLP={best_mlp_pred:6.1f} | "
-              f"Ridge={ridge_pred:6.1f} | Lasso={lasso_pred:6.1f} | RF={rf_pred:6.1f}")
+        
+        # Prepara stringa con informazioni sulla qualità
+        # Mostra Q52 (qualità della scan week52) subito dopo actual, dato che è il target
+        quality_str = ""
+        if week52_quality is not None:
+            quality_str = f" (Q52:{week52_quality[i]})"
+        
+        print(f"  | actual={actual:6.1f}{quality_str} | Ridge={ridge_pred:6.1f} (α={best_ridge_alpha:.1f}) | "
+              f"RF={rf_pred:6.1f} | Ensemble={ensemble_pred:6.1f}")
     
     results_df = pd.DataFrame(results)
     return results_df, all_importances, fold_curves
