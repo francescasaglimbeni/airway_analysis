@@ -162,13 +162,50 @@ def create_single_feature_plots(df_quality, features, output_dir):
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
         fig.suptitle(f'Single-Feature Prediction: {feature}', fontsize=16, fontweight='bold')
         
+        # First predict week0 and week52
+        result_week0 = leave_one_out_predict(df_quality, feature, 'FVC_percent_week0')
+        result_week52 = leave_one_out_predict(df_quality, feature, 'FVC_percent_week52')
+        
         for col, target in enumerate(targets):
             if target not in df_quality.columns:
                 continue
+            
+            # For drop, calculate it from week0 and week52 predictions
+            if target == 'FVC_drop_percent':
+                if result_week0 is None or result_week52 is None:
+                    continue
                 
-            result = leave_one_out_predict(df_quality, feature, target)
-            if result is None or result['n_samples'] < 5:
-                continue
+                # Find common indices (patients present in both predictions)
+                valid_data_week0 = df_quality[[feature, 'FVC_percent_week0']].dropna()
+                valid_data_week52 = df_quality[[feature, 'FVC_percent_week52']].dropna()
+                common_idx = valid_data_week0.index.intersection(valid_data_week52.index)
+                
+                if len(common_idx) < 5:
+                    continue
+                
+                # Calculate drop from predictions
+                predictions = result_week0['predictions'] - result_week52['predictions']
+                actuals = df_quality.loc[common_idx, 'FVC_drop_percent'].values
+                errors = predictions - actuals
+                
+                result = {
+                    'feature': feature,
+                    'target': target,
+                    'n_samples': len(common_idx),
+                    'predictions': predictions,
+                    'actuals': actuals,
+                    'errors': errors,
+                    'mse': mean_squared_error(actuals, predictions),
+                    'mae': mean_absolute_error(actuals, predictions),
+                    'rmse': np.sqrt(mean_squared_error(actuals, predictions)),
+                    'r2': r2_score(actuals, predictions),
+                    'pearson_r': pearsonr(actuals, predictions)[0],
+                    'pearson_p': pearsonr(actuals, predictions)[1]
+                }
+            else:
+                result = leave_one_out_predict(df_quality, feature, target)
+                if result is None or result['n_samples'] < 5:
+                    continue
                 
             all_results.append(result)
             
@@ -543,7 +580,9 @@ def create_interpolated_fvc_dataset_balanced(clinical_data):
         # Calculate drop
         if not np.isnan(week0_result['value']) and not np.isnan(week52_result['value']):
             fvc_drop_absolute = week0_result['value'] - week52_result['value']
-            fvc_drop_percent = (fvc_drop_absolute / week0_result['value']) * 100 if week0_result['value'] > 0 else np.nan
+            # FVC_drop_percent should be the simple difference (week0 - week52) 
+            # since both values are already in % of predicted
+            fvc_drop_percent = fvc_drop_absolute
         else:
             fvc_drop_absolute = np.nan
             fvc_drop_percent = np.nan
@@ -730,7 +769,7 @@ def main():
     print("\n" + "="*80)
     print("SINGLE-FEATURE FVC PREDICTION ANALYSIS - BALANCED APPROACH")
     print("="*80)
-    print("Week 0: Preferred [-5, 15], Extended [15, 30], Last resort ≤40")
+    print("Week 0: Preferred [-5, 15], Extended [15, 30], Last resort <=40")
     print("Week 52: Preferred [40, 65], Regression if reasonable")
     print("Quality levels: high/medium (strict), high/medium/low (balanced)")
     print("="*80)
