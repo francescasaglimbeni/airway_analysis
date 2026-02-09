@@ -114,20 +114,7 @@ def main():
             }
         )
         
-        # 3. Salva risultati
-        print(f"\n{'─'*70}")
-        print("  FASE 3: Salvataggio risultati")
-        print(f"{'─'*70}")
-        
-        save_results(
-            results_df=results_df,
-            importances=all_importances,
-            fold_curves=fold_curves,
-            output_dir=OUTPUT_DIR,
-            features=FEATURES
-        )
-        
-        # 4. Calcola metriche aggregate
+        # 3. Calcola metriche aggregate
         print(f"\n{'='*70}")
         print("  RISULTATI AGGREGATI")
         print(f"{'='*70}")
@@ -138,6 +125,40 @@ def main():
         # Salva metriche
         summary_df.to_csv(OUTPUT_DIR / 'model_comparison_summary.csv', index=False)
         print(f"\n  ✓ Metriche salvate in model_comparison_summary.csv")
+        
+        # 4. Salva risultati con architettura modello
+        print(f"\n{'─'*70}")
+        print("  FASE 3: Salvataggio risultati e configurazione modello")
+        print(f"{'─'*70}")
+        
+        # Estrai metriche per lo storico (dal modello MLP)
+        mlp_row = summary_df[summary_df['Model'] == 'MLP (multi-feature)']
+        metrics = {
+            'R2': float(mlp_row['R²'].values[0]),
+            'MAE': float(mlp_row['MAE'].values[0]),
+            'RMSE': float(mlp_row['RMSE'].values[0])
+        }
+        
+        save_results(
+            results_df=results_df,
+            importances=all_importances,
+            fold_curves=fold_curves,
+            output_dir=OUTPUT_DIR,
+            features=FEATURES,
+            model_config={
+                'hidden1': HIDDEN_1,
+                'hidden2': HIDDEN_2,
+                'dropout': DROPOUT,
+                'learning_rate': LEARNING_RATE,
+                'weight_decay': WEIGHT_DECAY,
+                'epochs_max': EPOCHS_MAX,
+                'patience': PATIENCE,
+                'val_fraction': VAL_FRACTION,
+                'n_inner_splits': N_INNER_SPLITS,
+                'seed': SEED
+            },
+            metrics=metrics
+        )
         
         # 5. Genera visualizzazioni
         print(f"\n{'─'*70}")
@@ -158,11 +179,13 @@ def main():
         print(f"{'='*70}")
         print(f"\n  Output salvati in: {OUTPUT_DIR}")
         print(f"\n  File generati:")
-        print(f"    • loocv_predictions.csv          — predizioni per paziente")
-        print(f"    • model_comparison_summary.csv   — R², MAE, RMSE aggregati")
-        print(f"    • feature_importances.csv        — importance per feature")
-        print(f"    • plot_actual_vs_predicted.png   — scatter actual vs predicted")
-        print(f"    • plot_bland_altman.png          — Bland-Altman")
+        print(f"    • loocv_predictions.csv              — predizioni per paziente")
+        print(f"    • model_comparison_summary.csv       — R², MAE, RMSE aggregati")
+        print(f"    • feature_importances.csv            — importance per feature")
+        print(f"    • config_summary.json                — configurazione modello attuale")
+        print(f"    • model_architectures_history.csv   — storico architetture (CSV)")
+        print(f"    • plot_actual_vs_predicted.png       — scatter actual vs predicted")
+        print(f"    • plot_bland_altman.png              — Bland-Altman")
         print(f"    • plot_per_patient_errors.png    — errori per paziente")
         print(f"    • plot_feature_importance.png    — permutation importance")
         print(f"    • training_curves/               — loss curves per fold")

@@ -66,39 +66,39 @@ def run_loocv(df, features, target, device, config):
         lr_full.fit(X_pool_scaled_base, y_pool)
         lr_multi_pred = lr_full.predict(X_test_scaled_base)[0]
         
-        # Ridge Regression (L2 regularization) - tuning α via nested CV
-        from sklearn.model_selection import GridSearchCV
-        ridge_cv = GridSearchCV(
-            Ridge(random_state=config['seed']),
-            param_grid={'alpha': [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]},
-            cv=min(5, len(X_pool_scaled_base)),  # 5-fold o LOOCV se <5 samples
-            scoring='neg_mean_absolute_error',
-            n_jobs=-1
-        )
-        ridge_cv.fit(X_pool_scaled_base, y_pool)
-        ridge_pred = ridge_cv.predict(X_test_scaled_base)[0]
-        best_ridge_alpha = ridge_cv.best_params_['alpha']
+        # Ridge Regression (L2 regularization)
+        ridge_alpha = config.get('ridge_alpha', 1.0)
+        ridge = Ridge(alpha=ridge_alpha, random_state=config['seed'])
+        ridge.fit(X_pool_scaled_base, y_pool)
+        ridge_pred = ridge.predict(X_test_scaled_base)[0]
+        best_ridge_alpha = ridge_alpha
         
         # Lasso Regression (L1 regularization)
-        lasso = Lasso(alpha=0.1, random_state=config['seed'], max_iter=5000)
+        lasso_alpha = config.get('lasso_alpha', 0.1)
+        lasso = Lasso(alpha=lasso_alpha, random_state=config['seed'], max_iter=5000)
         lasso.fit(X_pool_scaled_base, y_pool)
         lasso_pred = lasso.predict(X_test_scaled_base)[0]
         
         # Random Forest Regressor
+        rf_n_estimators = config.get('rf_n_estimators', 100)
+        rf_max_depth = config.get('rf_max_depth', 3)
+        rf_min_samples_split = config.get('rf_min_samples_split', 5)
+        rf_min_samples_leaf = config.get('rf_min_samples_leaf', 2)
         rf = RandomForestRegressor(
-            n_estimators=100,
-            max_depth=3,
-            min_samples_split=5,
-            min_samples_leaf=2,
+            n_estimators=rf_n_estimators,
+            max_depth=rf_max_depth,
+            min_samples_split=rf_min_samples_split,
+            min_samples_leaf=rf_min_samples_leaf,
             random_state=config['seed'],
             n_jobs=-1
         )
         rf.fit(X_pool_scaled_base, y_pool)
         rf_pred = rf.predict(X_test_scaled_base)[0]
         
-        # Ensemble: media pesata Ridge + RF (Ridge ha R² migliore, RF ha MAE migliore)
-        # Peso empirico: Ridge 60%, RF 40% (basato su performance relative)
-        ensemble_pred = 0.6 * ridge_pred + 0.4 * rf_pred
+        # Ensemble: media pesata Ridge + RF
+        ensemble_ridge_weight = config.get('ensemble_ridge_weight', 0.6)
+        ensemble_rf_weight = config.get('ensemble_rf_weight', 0.4)
+        ensemble_pred = ensemble_ridge_weight * ridge_pred + ensemble_rf_weight * rf_pred
         
         # Single-feature baselines (non normalizzate)
         single_baselines = run_linear_baselines(
