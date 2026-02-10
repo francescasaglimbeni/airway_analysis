@@ -43,37 +43,74 @@ N_INNER_SPLITS = 10
 # CONFIGURAZIONI COMPATTE - SOLO LE PIÙ PROMETTENTI
 # ============================================================================
 
-# --- MLP: 5 configurazioni chiave ---
+# --- MLP: 3 configurazioni essenziali ---
 MLP_CONFIGS = [
     # (h1, h2, dropout, lr, wd)
-    (12, 6, 0.3, 1e-3, 1e-4),   # piccola + dropout alto
     (16, 8, 0.2, 1e-3, 1e-4),   # baseline standard
     (16, 8, 0.3, 1e-3, 1e-3),   # baseline + forte regolarizzazione
     (20, 10, 0.3, 5e-4, 1e-3),  # media + lenta + reg forte
-    (24, 8, 0.3, 1e-3, 1e-3),   # bottleneck stretto
 ]
 
-# --- RIDGE: 4 valori α chiave ---
-RIDGE_CONFIGS = [0.5, 1.0, 2.0, 5.0]
+# --- RIDGE: 3 valori α chiave ---
+RIDGE_CONFIGS = [1.0, 2.0, 5.0]
 
-# --- LASSO: 3 valori α chiave ---
-LASSO_CONFIGS = [0.1, 0.2, 0.5]
+# --- LASSO: 2 valori α chiave ---
+LASSO_CONFIGS = [0.2, 0.5]
 
-# --- RANDOM FOREST: 4 configurazioni conservative ---
+# --- RANDOM FOREST: 3 configurazioni conservative ---
 RF_CONFIGS = [
     # (n_estimators, max_depth, min_samples_split, min_samples_leaf)
-    (50, 2, 5, 2),    # molto conservativo
-    (100, 2, 5, 2),   # più alberi, molto shallow
+    (100, 2, 5, 2),   # molto shallow
     (100, 3, 5, 2),   # baseline conservativo
     (100, 4, 5, 2),   # leggermente più profondo
 ]
 
-# --- ENSEMBLE: 3 configurazioni pesi ---
+# --- ENSEMBLE: 2 configurazioni pesi ---
 ENSEMBLE_CONFIGS = [
     (0.6, 0.4),  # Ridge leggermente dominante (baseline)
-    (0.5, 0.5),  # bilanciato
     (0.7, 0.3),  # Ridge dominante
 ]
+
+
+def save_checkpoint(all_results, tested_configs, checkpoint_file, state_file):
+    """Salva checkpoint con risultati e configurazioni già testate"""
+    # Salva risultati
+    if all_results:
+        pd.DataFrame(all_results).to_csv(checkpoint_file, index=False)
+    
+    # Salva stato (configurazioni già testate)
+    with open(state_file, 'w') as f:
+        json.dump({'tested_configs': list(tested_configs)}, f)
+
+
+def load_checkpoint(checkpoint_file, state_file):
+    """Carica checkpoint se esiste"""
+    results = []
+    tested_configs = set()
+    
+    if checkpoint_file.exists():
+        try:
+            df = pd.read_csv(checkpoint_file)
+            results = df.to_dict('records')
+            print(f"  ✓ Caricati {len(results)} risultati dal checkpoint")
+        except Exception as e:
+            print(f"  ⚠ Errore caricamento risultati: {e}")
+    
+    if state_file.exists():
+        try:
+            with open(state_file, 'r') as f:
+                state = json.load(f)
+                tested_configs = set(state.get('tested_configs', []))
+            print(f"  ✓ Trovate {len(tested_configs)} configurazioni già testate")
+        except Exception as e:
+            print(f"  ⚠ Errore caricamento stato: {e}")
+    
+    return results, tested_configs
+
+
+def get_config_signature(mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, ens_cfg):
+    """Genera un identificatore unico per una configurazione"""
+    return f"mlp_{mlp_cfg}_ridge_{ridge_cfg}_lasso_{lasso_cfg}_rf_{rf_cfg}_ens_{ens_cfg}"
 
 
 def test_configuration(df_clean, config_id, mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, ens_cfg):
@@ -154,6 +191,25 @@ def main():
     
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
+    # File checkpoint
+    checkpoint_file = OUTPUT_DIR / 'checkpoint_results.csv'
+    state_file = OUTPUT_DIR / 'checkpoint_state.json'
+    
+    # Carica checkpoint se esiste
+    print(f"\n{'─'*70}")
+    print("  Controllo checkpoint...")
+    print(f"{'─'*70}")
+    all_results, tested_configs = load_checkpoint(checkpoint_file, state_file)
+    
+    if tested_configs:
+        print(f"\n  🔄 RIPRESA DA CHECKPOINT")
+        print(f"  ✓ {len(tested_configs)} configurazioni già completate")
+        response = input(f"\n  ▶ Continuare da dove interrotto? (y per continuare, n per ricominciare): ")
+        if response.lower() == 'n':
+            all_results = []
+            tested_configs = set()
+            print("  ⚠ Checkpoint ignorato, ripartenza da zero")
+    
     # Carica dati
     print(f"\n{'─'*70}")
     print("  Caricamento dati...")
@@ -164,9 +220,13 @@ def main():
     # Calcola totale configurazioni
     total = (len(MLP_CONFIGS) * len(RIDGE_CONFIGS) * len(LASSO_CONFIGS) * 
              len(RF_CONFIGS) * len(ENSEMBLE_CONFIGS))
+    remaining = total - len(tested_configs)
     
     print(f"\n{'='*70}")
     print(f"  CONFIGURAZIONI TOTALI: {total}")
+    if tested_configs:
+        print(f"  GIÀ COMPLETATE: {len(tested_configs)}")
+        print(f"  RIMANENTI: {remaining}")
     print(f"{'='*70}")
     print(f"  • MLP: {len(MLP_CONFIGS)} configurazioni")
     print(f"  • Ridge: {len(RIDGE_CONFIGS)} valori α")
@@ -176,15 +236,15 @@ def main():
     
     # Stima tempo (più conservativa)
     minutes_per_config = 3.5
-    total_hours = (total * minutes_per_config) / 60
+    total_hours = (remaining * minutes_per_config) / 60
     
-    print(f"\n  ⏱ TEMPO STIMATO:")
+    print(f"\n  ⏱ TEMPO STIMATO (per configurazioni rimanenti):")
     print(f"     CPU: ~{total_hours:.1f} ore ({total_hours/24:.1f} giorni)")
     if torch.cuda.is_available():
         gpu_hours = total_hours / 2.5
         print(f"     GPU: ~{gpu_hours:.1f} ore ({gpu_hours/24:.1f} giorni)")
     
-    print(f"\n  💾 Salvataggio automatico ogni 5 configurazioni")
+    print(f"\n  💾 Checkpoint automatico dopo ogni configurazione")
     print(f"  📊 Output directory: {OUTPUT_DIR.name}/")
     
     response = input(f"\n  ▶ Avviare ricerca? (y/n): ")
@@ -193,46 +253,70 @@ def main():
         return
     
     # Esegui ricerca
-    all_results = []
     config_id = 0
+    configs_tested_this_session = 0
     start_time = datetime.now()
     
     print(f"\n{'#'*70}")
-    print("  INIZIO RICERCA")
+    if tested_configs:
+        print("  RIPRESA RICERCA")
+    else:
+        print("  INIZIO RICERCA")
     print(f"{'#'*70}")
     
-    for mlp_cfg in MLP_CONFIGS:
-        for ridge_cfg in RIDGE_CONFIGS:
-            for lasso_cfg in LASSO_CONFIGS:
-                for rf_cfg in RF_CONFIGS:
-                    for ens_cfg in ENSEMBLE_CONFIGS:
-                        config_id += 1
-                        
-                        # Progress update
-                        if config_id > 1:
-                            elapsed_h = (datetime.now() - start_time).total_seconds() / 3600
-                            avg_time = elapsed_h / (config_id - 1)
-                            remaining_h = avg_time * (total - config_id)
-                            eta = datetime.now() + pd.Timedelta(hours=remaining_h)
-                            progress_pct = (config_id / total) * 100
+    try:
+        for mlp_cfg in MLP_CONFIGS:
+            for ridge_cfg in RIDGE_CONFIGS:
+                for lasso_cfg in LASSO_CONFIGS:
+                    for rf_cfg in RF_CONFIGS:
+                        for ens_cfg in ENSEMBLE_CONFIGS:
+                            config_id += 1
                             
-                            print(f"\n{'#'*70}")
-                            print(f"  PROGRESSO: {config_id}/{total} ({progress_pct:.1f}%)")
-                            print(f"  Tempo: {elapsed_h:.1f}h trascorse | ~{remaining_h:.1f}h rimanenti")
-                            print(f"  ETA: {eta.strftime('%d/%m/%Y %H:%M')}")
-                            print(f"{'#'*70}")
-                        
-                        result = test_configuration(df_clean, config_id, mlp_cfg, 
-                                                   ridge_cfg, lasso_cfg, rf_cfg, ens_cfg)
-                        
-                        if result:
-                            all_results.append(result)
+                            # Genera signature per questa configurazione
+                            config_sig = get_config_signature(mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, ens_cfg)
                             
-                            # Salva ogni 5 configurazioni
-                            if len(all_results) % 5 == 0:
-                                pd.DataFrame(all_results).to_csv(
-                                    OUTPUT_DIR / 'results.csv', index=False)
-                                print(f"\n  💾 Checkpoint: {len(all_results)} configurazioni salvate")
+                            # Skip se già testata
+                            if config_sig in tested_configs:
+                                continue
+                            
+                            configs_tested_this_session += 1
+                            
+                            # Progress update
+                            completed = len(tested_configs) + configs_tested_this_session
+                            if configs_tested_this_session > 1:
+                                elapsed_h = (datetime.now() - start_time).total_seconds() / 3600
+                                avg_time = elapsed_h / configs_tested_this_session
+                                remaining_configs = remaining - configs_tested_this_session
+                                remaining_h = avg_time * remaining_configs
+                                eta = datetime.now() + pd.Timedelta(hours=remaining_h)
+                                progress_pct = (completed / total) * 100
+                                
+                                print(f"\n{'#'*70}")
+                                print(f"  PROGRESSO: {completed}/{total} ({progress_pct:.1f}%)")
+                                print(f"  Sessione corrente: {configs_tested_this_session} nuove configurazioni")
+                                print(f"  Tempo: {elapsed_h:.1f}h trascorse | ~{remaining_h:.1f}h rimanenti")
+                                print(f"  ETA: {eta.strftime('%d/%m/%Y %H:%M')}")
+                                print(f"{'#'*70}")
+                            
+                            result = test_configuration(df_clean, config_id, mlp_cfg, 
+                                                       ridge_cfg, lasso_cfg, rf_cfg, ens_cfg)
+                            
+                            if result:
+                                all_results.append(result)
+                                tested_configs.add(config_sig)
+                                
+                                # Salva checkpoint dopo ogni configurazione
+                                save_checkpoint(all_results, tested_configs, checkpoint_file, state_file)
+                                print(f"  💾 Checkpoint salvato ({len(all_results)} configurazioni totali)")
+    
+    except KeyboardInterrupt:
+        print(f"\n\n{'='*70}")
+        print("  ⚠ INTERRUZIONE MANUALE")
+        print(f"{'='*70}")
+        print(f"  Configurazioni completate: {len(all_results)}")
+        print(f"  Checkpoint salvato: puoi riprendere in seguito")
+        print(f"{'='*70}\n")
+        return
     
     # ========================================================================
     # ANALISI FINALE
@@ -244,6 +328,14 @@ def main():
     
     results_df = pd.DataFrame(all_results)
     results_df.to_csv(OUTPUT_DIR / 'results.csv', index=False)
+    
+    # Rimuovi checkpoint se completato tutto
+    if len(tested_configs) >= total:
+        if checkpoint_file.exists():
+            checkpoint_file.unlink()
+        if state_file.exists():
+            state_file.unlink()
+        print(f"\n  ✓ Ricerca completata! Checkpoint rimossi.")
     
     print(f"\n\n{'='*70}")
     print("  📊 ANALISI RISULTATI FINALI")
