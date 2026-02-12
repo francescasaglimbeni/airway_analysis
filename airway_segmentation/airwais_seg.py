@@ -4,34 +4,27 @@ from totalsegmentator.python_api import totalsegmentator
 import SimpleITK as sitk
 
 def convert_mhd_to_nifti(mhd_path, output_dir):
-    """
-    Convert MHD file to NIfTI format for TotalSegmentator compatibility.
-    """
     image = sitk.ReadImage(mhd_path)
-    
+
     print(f"\nMHD Image Info:")
     print(f"  Size: {image.GetSize()}")
     print(f"  Spacing: {image.GetSpacing()}")
     print(f"  Origin: {image.GetOrigin()}")
-    
+
     array = sitk.GetArrayFromImage(image)
     print(f"  Intensity range: [{array.min()}, {array.max()}]")
     print(f"  Array shape (Z,Y,X): {array.shape}")
-    
+
     base_name = os.path.splitext(os.path.basename(mhd_path))[0]
     nifti_path = os.path.join(output_dir, f"{base_name}.nii.gz")
-    
+
     os.makedirs(output_dir, exist_ok=True)
     sitk.WriteImage(image, nifti_path)
     print(f"Converted {mhd_path} to {nifti_path}")
-    
+
     return nifti_path
 
 def segment_airwayfull_from_mhd(mhd_path, output_dir, fast=False):
-    """
-    Segmenta le vie aeree complete (trachea + bronchi) e salva un file unico
-    chiamato `<base>_airwayfull.nii.gz` usando la classe 'lung_trachea_bronchia'.
-    """
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -39,7 +32,7 @@ def segment_airwayfull_from_mhd(mhd_path, output_dir, fast=False):
     nifti_path = convert_mhd_to_nifti(mhd_path, output_dir)
 
     print("\n=== 2) Segmentazione AIRWAYFULL con TotalSegmentator (task 'lung_vessels') ===")
-    
+
     totalsegmentator(
         nifti_path,
         output_dir,
