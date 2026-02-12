@@ -1,10 +1,9 @@
 """
-TEST MODELLI SU TUTTI I DATASET DISPONIBILI - WEEK52 PREDICTION
-Testa la predizione di FVC_percent_week52 su tutti i dataset provenienti da:
-- improved_fvc_prediction.py
-- improved_prediction_decline.py
+TEST MODELLI SU DATASET DA UNIFIED SCRIPT V2 - WEEK52 PREDICTION
+Testa la predizione di FVC_percent_week52 sui dataset generati da:
+- unified_fvc_prediction_v2.py
 
-Confronta le performance per identificare quale dataset è più predittivo.
+Valuta le performance sui diversi livelli di qualità e dataset specializzati.
 """
 
 import numpy as np
@@ -27,26 +26,21 @@ from evaluation.visualization import plot_all_results
 
 BASE_DIR = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation")
 
-# Dataset da improved_prediction/
-IMPROVED_PRED_DIR = BASE_DIR / "improved_prediction"
-DATASETS_IMPROVED_PRED = {
-    'quality_strict': IMPROVED_PRED_DIR / "quality_strict_dataset.csv",
-    'quality_balanced': IMPROVED_PRED_DIR / "quality_balanced_dataset.csv",
-    'all_data': IMPROVED_PRED_DIR / "all_data_dataset.csv"
-}
-
-# Dataset da improved_prediction_decline/
-IMPROVED_DECLINE_DIR = BASE_DIR / "improved_prediction_decline"
-DATASETS_IMPROVED_DECLINE = {
-    'traditional_decline': IMPROVED_DECLINE_DIR / "02_dataset_traditional.csv",
-    # NOTA: 04_dataset_direct_decline.csv NON ha FVC_percent_week52, 
-    # ha solo FVC_annual_decline_direct quindi non lo includiamo
+# Dataset da unified_prediction/
+UNIFIED_DIR = BASE_DIR / "unified_prediction"
+DATASETS = {
+    'strict': UNIFIED_DIR / "dataset_strict.csv",
+    'balanced': UNIFIED_DIR / "dataset_balanced.csv",
+    'all': UNIFIED_DIR / "dataset_all.csv",
+    'traditional_only': UNIFIED_DIR / "dataset_traditional_only.csv",
+    'both_targets': UNIFIED_DIR / "dataset_both_targets.csv",
+    # Note: decline_only NON incluso perché non ha FVC_percent_week52
 }
 
 # Output
 OUTPUT_DIR = Path(
     r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline"
-    r"\validation_test_models\week52_all_datasets_comparison"
+    r"\validation_test_models\week52_unified_v2_comparison"
 )
 
 # ============================================================================
@@ -408,8 +402,9 @@ def create_summary_table(all_results, output_dir):
 
 def main():
     print("\n" + "="*80)
-    print("  TEST PREDIZIONE WEEK52 SU TUTTI I DATASET DISPONIBILI")
+    print("  TEST PREDIZIONE WEEK52 SU DATASET UNIFIED V2")
     print("="*80)
+    print(f"  Script sorgente: unified_fvc_prediction_v2.py")
     print(f"  Target: {TARGET}")
     print(f"  Features: {len(FEATURES)}")
     print(f"  Device: {DEVICE}")
@@ -419,20 +414,15 @@ def main():
     # Crea directory output
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
-    # Raccogli tutti i dataset
-    all_datasets = {}
-    all_datasets.update(DATASETS_IMPROVED_PRED)
-    all_datasets.update(DATASETS_IMPROVED_DECLINE)
-    
-    print(f"\n  Dataset da testare: {len(all_datasets)}")
-    for name, path in all_datasets.items():
+    print(f"\n  Dataset da testare: {len(DATASETS)}")
+    for name, path in DATASETS.items():
         exists = "✓" if path.exists() else "✗"
         print(f"    {exists} {name}: {path.name}")
     
     # Testa ogni dataset
     all_results = []
     
-    for dataset_name, dataset_path in all_datasets.items():
+    for dataset_name, dataset_path in DATASETS.items():
         output_subdir = OUTPUT_DIR / dataset_name
         result = test_single_dataset(dataset_name, dataset_path, output_subdir)
         
@@ -445,11 +435,14 @@ def main():
         return
     
     print(f"\n{'='*80}")
-    print(f"  TEST COMPLETATI: {len(all_results)}/{len(all_datasets)} dataset")
+    print(f"  TEST COMPLETATI: {len(all_results)}/{len(DATASETS)} dataset")
     print(f"{'='*80}")
     
-    # Crea plot comparativi
-    create_comparison_plots(all_results, OUTPUT_DIR)
+    # Crea plot comparativi (solo se ci sono 2+ dataset)
+    if len(all_results) >= 2:
+        create_comparison_plots(all_results, OUTPUT_DIR)
+    else:
+        print(f"\n  ℹ️  Solo 1 dataset, skip plot comparativi")
     
     # Crea tabella riassuntiva
     summary_df = create_summary_table(all_results, OUTPUT_DIR)
@@ -471,11 +464,12 @@ def main():
     for result in all_results:
         print(f"     • {result['dataset_name']}/")
     
-    print(f"\n  📈 Plot comparativi:")
-    print(f"     • comparison_metrics_barplot.png")
-    print(f"     • comparison_r2_vs_size.png")
-    print(f"     • comparison_feature_importance_heatmap.png")
-    print(f"     • comparison_error_distributions.png")
+    if len(all_results) >= 2:
+        print(f"\n  📈 Plot comparativi:")
+        print(f"     • comparison_metrics_barplot.png")
+        print(f"     • comparison_r2_vs_size.png")
+        print(f"     • comparison_feature_importance_heatmap.png")
+        print(f"     • comparison_error_distributions.png")
     
     print(f"\n  📄 Tabella riassuntiva:")
     print(f"     • overall_summary.csv")
