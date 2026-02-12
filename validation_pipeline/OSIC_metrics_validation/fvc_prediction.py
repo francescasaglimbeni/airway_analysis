@@ -579,6 +579,17 @@ def integrate_airway_fvc_and_decline_unified(reliable_cases, fvc_df, decline_df,
     
     rows = []
     
+    # Diagnostic counters
+    stats = {
+        'total_cases': len(reliable_cases),
+        'no_fvc_data': 0,
+        'no_advanced_metrics': 0,
+        'no_parenchymal_metrics': 0,
+        'missing_airway_keys': 0,
+        'missing_parenchymal_keys': 0,
+        'success': 0
+    }
+    
     for idx, case_row in reliable_cases.iterrows():
         case_name = case_row['case']
         patient_id = extract_patient_id(case_name)
@@ -586,6 +597,7 @@ def integrate_airway_fvc_and_decline_unified(reliable_cases, fvc_df, decline_df,
         # Find FVC data
         patient_fvc = fvc_df[fvc_df['Patient'] == patient_id]
         if len(patient_fvc) == 0:
+            stats['no_fvc_data'] += 1
             continue
         
         patient_fvc = patient_fvc.iloc[0]
@@ -596,9 +608,12 @@ def integrate_airway_fvc_and_decline_unified(reliable_cases, fvc_df, decline_df,
         # Load metrics
         advanced = load_advanced_metrics(case_name)
         if advanced is None:
+            stats['no_advanced_metrics'] += 1
             continue
         
         parenchymal = load_parenchymal_metrics(case_name)
+        if parenchymal is None:
+            stats['no_parenchymal_metrics'] += 1
         
         # Base row with demographics and metrics
         row = {
@@ -619,6 +634,16 @@ def integrate_airway_fvc_and_decline_unified(reliable_cases, fvc_df, decline_df,
             'mean_lung_density_HU': parenchymal.get('mean_lung_density_HU') if parenchymal else np.nan,
             'histogram_entropy': parenchymal.get('histogram_entropy') if parenchymal else np.nan,
         }
+        
+        # Check if any airway metrics are None (missing from JSON)
+        airway_keys = ['mean_peripheral_branch_volume_mm3', 'peripheral_branch_density', 
+                       'mean_peripheral_diameter_mm', 'central_to_peripheral_diameter_ratio']
+        if any(row[key] is None for key in airway_keys):
+            stats['missing_airway_keys'] += 1
+        
+        # Check if parenchymal metrics are missing
+        if parenchymal is None or parenchymal.get('mean_lung_density_HU') is None or parenchymal.get('histogram_entropy') is None:
+            stats['missing_parenchymal_keys'] += 1
         
         # Add FVC data (traditional drop)
         has_fvc = False
@@ -693,8 +718,21 @@ def integrate_airway_fvc_and_decline_unified(reliable_cases, fvc_df, decline_df,
         # Aggiungi paziente solo se ha almeno uno dei due target
         if has_fvc or has_decline:
             rows.append(row)
+            stats['success'] += 1
     
     df = pd.DataFrame(rows)
+    
+    # =========================================================================
+    # DIAGNOSTIC: Print loading statistics
+    # =========================================================================
+    print(f"\n  📊 DATA LOADING STATISTICS:")
+    print(f"    Total reliable cases: {stats['total_cases']}")
+    print(f"    Successfully integrated: {stats['success']}")
+    print(f"    Skipped - no FVC data: {stats['no_fvc_data']}")
+    print(f"    Skipped - no advanced metrics JSON: {stats['no_advanced_metrics']}")
+    print(f"    Cases with missing parenchymal metrics: {stats['no_parenchymal_metrics']} ({100*stats['no_parenchymal_metrics']/stats['total_cases']:.1f}%)")
+    print(f"    Cases with missing airway metric keys: {stats['missing_airway_keys']}")
+    print(f"    Cases with missing parenchymal keys: {stats['missing_parenchymal_keys']}")
     
     # Statistics
     n_total = len(df)
@@ -710,6 +748,39 @@ def integrate_airway_fvc_and_decline_unified(reliable_cases, fvc_df, decline_df,
     print(f"    • With BOTH: {n_with_both}")
     print(f"  FVC drop available: {n_with_fvc}/{n_total} ({100*n_with_fvc/n_total:.1f}%)")
     print(f"  Decline available: {n_with_decline}/{n_total} ({100*n_with_decline/n_total:.1f}%)")
+    
+    # =========================================================================
+    # DIAGNOSTIC: Check for NaN in features
+    # =========================================================================
+    print(f"\n  🔍 DIAGNOSTIC - Checking for NaN values in features:")
+    feature_cols = [
+        'mean_peripheral_branch_volume_mm3',
+        'peripheral_branch_density',
+        'mean_peripheral_diameter_mm',
+        'central_to_peripheral_diameter_ratio',
+        'mean_lung_density_HU',
+        'histogram_entropy'
+    ]
+    
+    for col in feature_cols:
+        if col in df.columns:
+            n_nan = df[col].isna().sum()
+            if n_nan > 0:
+                pct = 100 * n_nan / n_total
+                print(f"    ⚠ {col}: {n_nan}/{n_total} NaN ({pct:.1f}%)")
+    
+    # Check which patients have ALL features complete
+    n_complete_features = df[feature_cols].dropna().shape[0]
+    print(f"\n  ✓ Patients with ALL features complete: {n_complete_features}/{n_total} ({100*n_complete_features/n_total:.1f}%)")
+    
+    if n_complete_features < n_total:
+        print(f"  ⚠ {n_total - n_complete_features} patients have at least one missing feature")
+        print(f"  → These patients will be removed to ensure dataset quality")
+        
+        # Filter out patients with missing features (keep all columns, just filter rows)
+        df = df.dropna(subset=feature_cols).reset_index(drop=True)
+        
+        print(f"  ✓ Final dataset size: {len(df)} patients (all features complete)")
     
     return df
 
