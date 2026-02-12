@@ -1,20 +1,8 @@
 # Airway Segmentation and Fibrosis Assessment Pipeline
 
-Complete pipeline for airway segmentation, morphometric analysis, and pulmonary fibrosis assessment from chest CT images.
+Complete pipeline for airway segmentation, morphometric analysis, and pulmonary fibrosis assessment from chest CT images. 
 
-## 📋 Table of Contents
-
-- [Description](#description)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Pipeline Structure](#pipeline-structure)
-- [Usage](#usage)
-- [Output](#output)
-- [Main Modules](#main-modules)
-- [Utility Scripts](#utility-scripts)
-
----
-
+--- 
 ## 🔍 Description
 
 This automated pipeline performs a comprehensive analysis of bronchial airways from CT scans, including:
