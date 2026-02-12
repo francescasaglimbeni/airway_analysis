@@ -17,7 +17,7 @@ from data.splits import run_loocv
 from evaluation.metrics import compute_aggregate_metrics
 
 # Paths
-INPUT_CSV = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\improved_prediction\quality_balanced_dataset.csv")
+INPUT_CSV = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\improved_prediction\all_data_dataset.csv")
 OUTPUT_DIR = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\validation_test_models\quick_search_results")
 
 FEATURES = [
