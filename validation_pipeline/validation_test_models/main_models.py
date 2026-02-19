@@ -110,7 +110,13 @@ def main():
                 'patience': PATIENCE,
                 'val_fraction': VAL_FRACTION,
                 'n_inner_splits': N_INNER_SPLITS,
-                'seed': SEED
+                'seed': SEED,
+                # XGBoost parameters (default conservative config)
+                'xgb_n_estimators': 100,
+                'xgb_max_depth': 3,
+                'xgb_learning_rate': 0.05,
+                'xgb_reg_alpha': 2.0,
+                'xgb_reg_lambda': 2.0,
             }
         )
         

@@ -17,7 +17,7 @@ from data.splits import run_loocv
 from evaluation.metrics import compute_aggregate_metrics
 
 # Paths
-INPUT_CSV = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\improved_prediction\all_data_dataset.csv")
+INPUT_CSV = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\unified_prediction\dataset_balanced.csv")
 OUTPUT_DIR = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\validation_test_models\quick_search_results")
 
 FEATURES = [
@@ -65,6 +65,14 @@ RF_CONFIGS = [
     (100, 4, 5, 2),   # leggermente più profondo
 ]
 
+# --- XGBOOST: 3 configurazioni ottimizzate per dataset piccoli ---
+XGBOOST_CONFIGS = [
+    # (n_estimators, max_depth, learning_rate, reg_alpha, reg_lambda)
+    (100, 2, 0.1, 1.0, 1.0),   # conservative - shallow trees, regolarizzazione moderata
+    (100, 3, 0.05, 2.0, 2.0),  # molto regolarizzato - lento learning, reg forte
+    (150, 3, 0.1, 1.0, 2.0),   # bilanciato - più alberi, reg L2 dominante
+]
+
 # --- ENSEMBLE: 2 configurazioni pesi ---
 ENSEMBLE_CONFIGS = [
     (0.6, 0.4),  # Ridge leggermente dominante (baseline)
@@ -108,25 +116,27 @@ def load_checkpoint(checkpoint_file, state_file):
     return results, tested_configs
 
 
-def get_config_signature(mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, ens_cfg):
+def get_config_signature(mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, xgb_cfg, ens_cfg):
     """Genera un identificatore unico per una configurazione"""
-    return f"mlp_{mlp_cfg}_ridge_{ridge_cfg}_lasso_{lasso_cfg}_rf_{rf_cfg}_ens_{ens_cfg}"
+    return f"mlp_{mlp_cfg}_ridge_{ridge_cfg}_lasso_{lasso_cfg}_rf_{rf_cfg}_xgb_{xgb_cfg}_ens_{ens_cfg}"
 
 
-def test_configuration(df_clean, config_id, mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, ens_cfg):
+def test_configuration(df_clean, config_id, mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, xgb_cfg, ens_cfg):
     """Testa una configurazione completa"""
     
     mlp_h1, mlp_h2, mlp_drop, mlp_lr, mlp_wd = mlp_cfg
     ridge_alpha = ridge_cfg
     lasso_alpha = lasso_cfg
     rf_n_est, rf_depth, rf_split, rf_leaf = rf_cfg
+    xgb_n_est, xgb_depth, xgb_lr, xgb_alpha, xgb_lambda = xgb_cfg
     ens_ridge_w, ens_rf_w = ens_cfg
     
     print(f"\n{'─'*70}")
     print(f"  CONFIG {config_id}")
     print(f"  MLP: {mlp_h1}-{mlp_h2}, drop={mlp_drop}, lr={mlp_lr:.0e}, wd={mlp_wd:.0e}")
     print(f"  Ridge: α={ridge_alpha} | Lasso: α={lasso_alpha}")
-    print(f"  RF: n={rf_n_est}, d={rf_depth} | Ens: R={ens_ridge_w:.1f}, RF={ens_rf_w:.1f}")
+    print(f"  RF: n={rf_n_est}, d={rf_depth} | XGB: n={xgb_n_est}, d={xgb_depth}, lr={xgb_lr:.2f}")
+    print(f"  Ens: R={ens_ridge_w:.1f}, RF={ens_rf_w:.1f}")
     
     config = {
         'hidden1': mlp_h1, 'hidden2': mlp_h2, 'dropout': mlp_drop,
@@ -137,6 +147,8 @@ def test_configuration(df_clean, config_id, mlp_cfg, ridge_cfg, lasso_cfg, rf_cf
         'ridge_alpha': ridge_alpha, 'lasso_alpha': lasso_alpha,
         'rf_n_estimators': rf_n_est, 'rf_max_depth': rf_depth,
         'rf_min_samples_split': rf_split, 'rf_min_samples_leaf': rf_leaf,
+        'xgb_n_estimators': xgb_n_est, 'xgb_max_depth': xgb_depth,
+        'xgb_learning_rate': xgb_lr, 'xgb_reg_alpha': xgb_alpha, 'xgb_reg_lambda': xgb_lambda,
         'ensemble_ridge_weight': ens_ridge_w, 'ensemble_rf_weight': ens_rf_w,
     }
     
@@ -152,6 +164,8 @@ def test_configuration(df_clean, config_id, mlp_cfg, ridge_cfg, lasso_cfg, rf_cf
             'ridge_alpha': ridge_alpha, 'lasso_alpha': lasso_alpha,
             'rf_n_estimators': rf_n_est, 'rf_max_depth': rf_depth,
             'rf_min_samples_split': rf_split, 'rf_min_samples_leaf': rf_leaf,
+            'xgb_n_estimators': xgb_n_est, 'xgb_max_depth': xgb_depth,
+            'xgb_learning_rate': xgb_lr, 'xgb_reg_alpha': xgb_alpha, 'xgb_reg_lambda': xgb_lambda,
             'ensemble_ridge_weight': ens_ridge_w, 'ensemble_rf_weight': ens_rf_w,
         }
         
@@ -168,6 +182,7 @@ def test_configuration(df_clean, config_id, mlp_cfg, ridge_cfg, lasso_cfg, rf_cf
         print(f"  ✓ Ens: R²={result.get('ensemble_r2', 0):.4f}, MAE={result.get('ensemble_mae', 0):.2f}")
         print(f"  ✓ Ridge: R²={result.get('ridge_r2', 0):.4f}, MAE={result.get('ridge_mae', 0):.2f}")
         print(f"  ✓ RF: R²={result.get('random_forest_r2', 0):.4f}, MAE={result.get('random_forest_mae', 0):.2f}")
+        print(f"  ✓ XGB: R²={result.get('xgboost_r2', 0):.4f}, MAE={result.get('xgboost_mae', 0):.2f}")
         
         return result
     except Exception as e:
@@ -219,7 +234,7 @@ def main():
     
     # Calcola totale configurazioni
     total = (len(MLP_CONFIGS) * len(RIDGE_CONFIGS) * len(LASSO_CONFIGS) * 
-             len(RF_CONFIGS) * len(ENSEMBLE_CONFIGS))
+             len(RF_CONFIGS) * len(XGBOOST_CONFIGS) * len(ENSEMBLE_CONFIGS))
     remaining = total - len(tested_configs)
     
     print(f"\n{'='*70}")
@@ -232,6 +247,7 @@ def main():
     print(f"  • Ridge: {len(RIDGE_CONFIGS)} valori α")
     print(f"  • Lasso: {len(LASSO_CONFIGS)} valori α")
     print(f"  • Random Forest: {len(RF_CONFIGS)} configurazioni")
+    print(f"  • XGBoost: {len(XGBOOST_CONFIGS)} configurazioni")
     print(f"  • Ensemble: {len(ENSEMBLE_CONFIGS)} combinazioni pesi")
     
     # Stima tempo (più conservativa)
@@ -269,17 +285,18 @@ def main():
             for ridge_cfg in RIDGE_CONFIGS:
                 for lasso_cfg in LASSO_CONFIGS:
                     for rf_cfg in RF_CONFIGS:
-                        for ens_cfg in ENSEMBLE_CONFIGS:
-                            config_id += 1
-                            
-                            # Genera signature per questa configurazione
-                            config_sig = get_config_signature(mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, ens_cfg)
-                            
-                            # Skip se già testata
-                            if config_sig in tested_configs:
-                                continue
-                            
-                            configs_tested_this_session += 1
+                        for xgb_cfg in XGBOOST_CONFIGS:
+                            for ens_cfg in ENSEMBLE_CONFIGS:
+                                config_id += 1
+                                
+                                # Genera signature per questa configurazione
+                                config_sig = get_config_signature(mlp_cfg, ridge_cfg, lasso_cfg, rf_cfg, xgb_cfg, ens_cfg)
+                                
+                                # Skip se già testata
+                                if config_sig in tested_configs:
+                                    continue
+                                
+                                configs_tested_this_session += 1
                             
                             # Progress update
                             completed = len(tested_configs) + configs_tested_this_session
@@ -298,16 +315,16 @@ def main():
                                 print(f"  ETA: {eta.strftime('%d/%m/%Y %H:%M')}")
                                 print(f"{'#'*70}")
                             
-                            result = test_configuration(df_clean, config_id, mlp_cfg, 
-                                                       ridge_cfg, lasso_cfg, rf_cfg, ens_cfg)
-                            
-                            if result:
-                                all_results.append(result)
-                                tested_configs.add(config_sig)
+                                result = test_configuration(df_clean, config_id, mlp_cfg, 
+                                                           ridge_cfg, lasso_cfg, rf_cfg, xgb_cfg, ens_cfg)
                                 
-                                # Salva checkpoint dopo ogni configurazione
-                                save_checkpoint(all_results, tested_configs, checkpoint_file, state_file)
-                                print(f"  💾 Checkpoint salvato ({len(all_results)} configurazioni totali)")
+                                if result:
+                                    all_results.append(result)
+                                    tested_configs.add(config_sig)
+                                    
+                                    # Salva checkpoint dopo ogni configurazione
+                                    save_checkpoint(all_results, tested_configs, checkpoint_file, state_file)
+                                    print(f"  💾 Checkpoint salvato ({len(all_results)} configurazioni totali)")
     
     except KeyboardInterrupt:
         print(f"\n\n{'='*70}")
@@ -346,6 +363,7 @@ def main():
     models = [
         ('MLP', 'mlp'),
         ('Ensemble', 'ensemble'),
+        ('XGBoost', 'xgboost'),
         ('Ridge', 'ridge'),
         ('Random Forest', 'random_forest'),
         ('Lasso', 'lasso'),
@@ -389,6 +407,12 @@ def main():
         elif key == 'random_forest':
             print(f"      n_estimators: {int(best['rf_n_estimators'])}")
             print(f"      max_depth: {int(best['rf_max_depth'])}")
+        elif key == 'xgboost':
+            print(f"      n_estimators: {int(best['xgb_n_estimators'])}")
+            print(f"      max_depth: {int(best['xgb_max_depth'])}")
+            print(f"      learning_rate: {best['xgb_learning_rate']:.3f}")
+            print(f"      reg_alpha (L1): {best['xgb_reg_alpha']:.1f}")
+            print(f"      reg_lambda (L2): {best['xgb_reg_lambda']:.1f}")
         elif key == 'ensemble':
             print(f"      Ridge weight: {best['ensemble_ridge_weight']:.2f}")
             print(f"      RF weight: {best['ensemble_rf_weight']:.2f}")
@@ -429,6 +453,14 @@ def main():
                 'max_depth': int(best['rf_max_depth']),
                 'min_samples_split': int(best['rf_min_samples_split']),
                 'min_samples_leaf': int(best['rf_min_samples_leaf']),
+            }
+        elif key == 'xgboost':
+            best_configs[key]['parameters'] = {
+                'n_estimators': int(best['xgb_n_estimators']),
+                'max_depth': int(best['xgb_max_depth']),
+                'learning_rate': float(best['xgb_learning_rate']),
+                'reg_alpha': float(best['xgb_reg_alpha']),
+                'reg_lambda': float(best['xgb_reg_lambda']),
             }
         elif key == 'ensemble':
             best_configs[key]['parameters'] = {

@@ -7,6 +7,13 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor
 
+try:
+    import xgboost as xgb
+    XGBOOST_AVAILABLE = True
+except ImportError:
+    XGBOOST_AVAILABLE = False
+    print("⚠ XGBoost non disponibile - installare con: pip install xgboost")
+
 from models.train_utils import train_mlp, predict_mlp
 from evaluation.baselines import run_linear_baselines
 from evaluation.metrics import compute_permutation_importance
@@ -94,6 +101,29 @@ def run_loocv(df, features, target, device, config):
         )
         rf.fit(X_pool_scaled_base, y_pool)
         rf_pred = rf.predict(X_test_scaled_base)[0]
+        
+        # XGBoost Regressor
+        if XGBOOST_AVAILABLE:
+            xgb_n_estimators = config.get('xgb_n_estimators', 100)
+            xgb_max_depth = config.get('xgb_max_depth', 3)
+            xgb_learning_rate = config.get('xgb_learning_rate', 0.05)
+            xgb_reg_alpha = config.get('xgb_reg_alpha', 2.0)  # L1 regularization
+            xgb_reg_lambda = config.get('xgb_reg_lambda', 2.0)  # L2 regularization
+            
+            xgb_model = xgb.XGBRegressor(
+                n_estimators=xgb_n_estimators,
+                max_depth=xgb_max_depth,
+                learning_rate=xgb_learning_rate,
+                reg_alpha=xgb_reg_alpha,
+                reg_lambda=xgb_reg_lambda,
+                random_state=config['seed'],
+                n_jobs=-1,
+                verbosity=0
+            )
+            xgb_model.fit(X_pool_scaled_base, y_pool)
+            xgb_pred = xgb_model.predict(X_test_scaled_base)[0]
+        else:
+            xgb_pred = np.nan
         
         # Ensemble: media pesata Ridge + RF
         ensemble_ridge_weight = config.get('ensemble_ridge_weight', 0.6)
@@ -188,6 +218,7 @@ def run_loocv(df, features, target, device, config):
             'ridge_pred': ridge_pred,
             'lasso_pred': lasso_pred,
             'rf_pred': rf_pred,
+            'xgb_pred': xgb_pred if XGBOOST_AVAILABLE else np.nan,
             'ensemble_pred': ensemble_pred,
             'best_single_feature': best_single_feature,
             'best_single_pred': best_single_pred,
@@ -196,6 +227,7 @@ def run_loocv(df, features, target, device, config):
             'ridge_error': ridge_pred - actual,
             'lasso_error': lasso_pred - actual,
             'rf_error': rf_pred - actual,
+            'xgb_error': xgb_pred - actual if XGBOOST_AVAILABLE else np.nan,
             'ensemble_error': ensemble_pred - actual,
             'best_single_error': best_single_pred - actual if not np.isnan(best_single_pred) else np.nan,
             'mlp_val_mae': best_mlp_val_mae,
@@ -218,8 +250,9 @@ def run_loocv(df, features, target, device, config):
         if week52_quality is not None:
             quality_str = f" (Q52:{week52_quality[i]})"
         
+        xgb_str = f" | XGB={xgb_pred:6.1f}" if XGBOOST_AVAILABLE else ""
         print(f"  | actual={actual:6.1f}{quality_str} | Ridge={ridge_pred:6.1f} (α={best_ridge_alpha:.1f}) | "
-              f"RF={rf_pred:6.1f} | Ensemble={ensemble_pred:6.1f}")
+              f"RF={rf_pred:6.1f}{xgb_str} | Ensemble={ensemble_pred:6.1f}")
     
     results_df = pd.DataFrame(results)
     return results_df, all_importances, fold_curves

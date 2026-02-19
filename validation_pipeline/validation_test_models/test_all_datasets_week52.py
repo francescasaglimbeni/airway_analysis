@@ -133,7 +133,13 @@ def test_single_dataset(dataset_name, dataset_path, output_subdir):
                 'patience': PATIENCE,
                 'val_fraction': VAL_FRACTION,
                 'n_inner_splits': N_INNER_SPLITS,
-                'seed': SEED
+                'seed': SEED,
+                # XGBoost parameters (default conservative config)
+                'xgb_n_estimators': 100,
+                'xgb_max_depth': 3,
+                'xgb_learning_rate': 0.05,
+                'xgb_reg_alpha': 2.0,
+                'xgb_reg_lambda': 2.0,
             }
         )
         
@@ -214,148 +220,226 @@ def create_comparison_plots(all_results, output_dir):
     # -------------------------------------------------------------------------
     # 1. Barplot comparativo delle metriche
     # -------------------------------------------------------------------------
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-    fig.suptitle('Confronto Performance su Tutti i Dataset - Week52 Prediction', 
-                 fontsize=14, fontweight='bold')
-    
-    # R²
-    ax = axes[0]
-    bars = ax.bar(range(len(dataset_names)), r2_scores, 
-                  color=sns.color_palette("viridis", len(dataset_names)))
-    ax.set_xticks(range(len(dataset_names)))
-    ax.set_xticklabels(dataset_names, rotation=45, ha='right')
-    ax.set_ylabel('R² Score')
-    ax.set_title('R² Score per Dataset')
-    ax.axhline(0, color='black', linewidth=0.5)
-    ax.grid(axis='y', alpha=0.3)
-    
-    # Aggiungi valori sopra le barre
-    for i, (bar, val, n) in enumerate(zip(bars, r2_scores, n_patients)):
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.02,
-                f'{val:.3f}\n(n={n})', ha='center', va='bottom', fontsize=9)
-    
-    # MAE
-    ax = axes[1]
-    bars = ax.bar(range(len(dataset_names)), mae_scores,
-                  color=sns.color_palette("viridis", len(dataset_names)))
-    ax.set_xticks(range(len(dataset_names)))
-    ax.set_xticklabels(dataset_names, rotation=45, ha='right')
-    ax.set_ylabel('MAE (%)')
-    ax.set_title('MAE per Dataset')
-    ax.grid(axis='y', alpha=0.3)
-    
-    for i, (bar, val, n) in enumerate(zip(bars, mae_scores, n_patients)):
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
-                f'{val:.2f}\n(n={n})', ha='center', va='bottom', fontsize=9)
-    
-    # RMSE
-    ax = axes[2]
-    bars = ax.bar(range(len(dataset_names)), rmse_scores,
-                  color=sns.color_palette("viridis", len(dataset_names)))
-    ax.set_xticks(range(len(dataset_names)))
-    ax.set_xticklabels(dataset_names, rotation=45, ha='right')
-    ax.set_ylabel('RMSE (%)')
-    ax.set_title('RMSE per Dataset')
-    ax.grid(axis='y', alpha=0.3)
-    
-    for i, (bar, val, n) in enumerate(zip(bars, rmse_scores, n_patients)):
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
-                f'{val:.2f}\n(n={n})', ha='center', va='bottom', fontsize=9)
-    
-    plt.tight_layout()
-    plt.savefig(output_dir / 'comparison_metrics_barplot.png', dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"  ✓ Salvato: comparison_metrics_barplot.png")
+    try:
+        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+        fig.suptitle('Confronto Performance su Tutti i Dataset - Week52 Prediction', 
+                     fontsize=14, fontweight='bold')
+        
+        # R²
+        ax = axes[0]
+        bars = ax.bar(range(len(dataset_names)), r2_scores, 
+                      color=sns.color_palette("viridis", len(dataset_names)))
+        ax.set_xticks(range(len(dataset_names)))
+        ax.set_xticklabels(dataset_names, rotation=45, ha='right')
+        ax.set_ylabel('R² Score')
+        ax.set_title('R² Score per Dataset')
+        ax.axhline(0, color='black', linewidth=0.5)
+        ax.grid(axis='y', alpha=0.3)
+        
+        # Aggiungi valori sopra le barre
+        for i, (bar, val, n) in enumerate(zip(bars, r2_scores, n_patients)):
+            y_pos = bar.get_height() + 0.02 if bar.get_height() >= 0 else bar.get_height() - 0.2
+            ax.text(bar.get_x() + bar.get_width()/2, y_pos,
+                    f'{val:.3f}\n(n={n})', ha='center', va='bottom' if bar.get_height() >= 0 else 'top', fontsize=9)
+        
+        # MAE
+        ax = axes[1]
+        bars = ax.bar(range(len(dataset_names)), mae_scores,
+                      color=sns.color_palette("viridis", len(dataset_names)))
+        ax.set_xticks(range(len(dataset_names)))
+        ax.set_xticklabels(dataset_names, rotation=45, ha='right')
+        ax.set_ylabel('MAE (%)')
+        ax.set_title('MAE per Dataset')
+        ax.grid(axis='y', alpha=0.3)
+        
+        for i, (bar, val, n) in enumerate(zip(bars, mae_scores, n_patients)):
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+                    f'{val:.2f}\n(n={n})', ha='center', va='bottom', fontsize=9)
+        
+        # RMSE
+        ax = axes[2]
+        bars = ax.bar(range(len(dataset_names)), rmse_scores,
+                      color=sns.color_palette("viridis", len(dataset_names)))
+        ax.set_xticks(range(len(dataset_names)))
+        ax.set_xticklabels(dataset_names, rotation=45, ha='right')
+        ax.set_ylabel('RMSE (%)')
+        ax.set_title('RMSE per Dataset')
+        ax.grid(axis='y', alpha=0.3)
+        
+        for i, (bar, val, n) in enumerate(zip(bars, rmse_scores, n_patients)):
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+                    f'{val:.2f}\n(n={n})', ha='center', va='bottom', fontsize=9)
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / 'comparison_metrics_barplot.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"  ✓ Salvato: comparison_metrics_barplot.png")
+    except Exception as e:
+        plt.close()
+        print(f"  ⚠ Errore durante creazione barplot: {e}")
     
     # -------------------------------------------------------------------------
     # 2. Scatter plot: R² vs n_patients
     # -------------------------------------------------------------------------
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    scatter = ax.scatter(n_patients, r2_scores, s=200, alpha=0.7,
-                        c=range(len(dataset_names)), cmap='viridis')
-    
-    # Aggiungi labels
-    for i, name in enumerate(dataset_names):
-        ax.annotate(name, (n_patients[i], r2_scores[i]),
-                   xytext=(5, 5), textcoords='offset points',
-                   fontsize=9, fontweight='bold')
-    
-    ax.set_xlabel('Numero Pazienti', fontsize=12)
-    ax.set_ylabel('R² Score', fontsize=12)
-    ax.set_title('R² vs Dimensione Dataset', fontsize=14, fontweight='bold')
-    ax.grid(True, alpha=0.3)
-    ax.axhline(0, color='red', linestyle='--', linewidth=1, alpha=0.5, label='R²=0')
-    ax.legend()
-    
-    plt.tight_layout()
-    plt.savefig(output_dir / 'comparison_r2_vs_size.png', dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"  ✓ Salvato: comparison_r2_vs_size.png")
+    try:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        scatter = ax.scatter(n_patients, r2_scores, s=200, alpha=0.7,
+                            c=range(len(dataset_names)), cmap='viridis')
+        
+        # Aggiungi labels
+        for i, name in enumerate(dataset_names):
+            ax.annotate(name, (n_patients[i], r2_scores[i]),
+                       xytext=(5, 5), textcoords='offset points',
+                       fontsize=9, fontweight='bold')
+        
+        ax.set_xlabel('Numero Pazienti', fontsize=12)
+        ax.set_ylabel('R² Score', fontsize=12)
+        ax.set_title('R² vs Dimensione Dataset', fontsize=14, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        ax.axhline(0, color='red', linestyle='--', linewidth=1, alpha=0.5, label='R²=0')
+        ax.legend()
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / 'comparison_r2_vs_size.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"  ✓ Salvato: comparison_r2_vs_size.png")
+    except Exception as e:
+        plt.close()
+        print(f"  ⚠ Errore durante creazione scatter plot: {e}")
     
     # -------------------------------------------------------------------------
     # 3. Feature importance comparison (heatmap)
     # -------------------------------------------------------------------------
-    fig, ax = plt.subplots(figsize=(12, 8))
-    
-    # Crea matrice di importance
-    importance_matrix = []
-    for result in all_results:
-        imp_df = result['importances_df']
-        # Media delle importance per feature
-        avg_importance = imp_df.groupby('Feature')['Importance_Std'].mean()
-        # Assicurati che abbia tutte le feature nell'ordine corretto
-        avg_importance = avg_importance.reindex(FEATURES, fill_value=0)
-        importance_matrix.append(avg_importance.values)
-    
-    importance_matrix = np.array(importance_matrix)
-    
-    # Crea heatmap
-    sns.heatmap(importance_matrix, annot=True, fmt='.3f', cmap='YlOrRd',
-                xticklabels=[f.replace('_', ' ') for f in FEATURES],
-                yticklabels=dataset_names,
-                cbar_kws={'label': 'Feature Importance (std)'}, ax=ax)
-    
-    ax.set_title('Confronto Feature Importance tra Dataset', fontsize=14, fontweight='bold')
-    plt.xticks(rotation=45, ha='right')
-    plt.yticks(rotation=0)
-    plt.tight_layout()
-    plt.savefig(output_dir / 'comparison_feature_importance_heatmap.png', dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"  ✓ Salvato: comparison_feature_importance_heatmap.png")
+    try:
+        # Verifica prima se TUTTI i dataset hanno importances valide
+        valid_importances = []
+        valid_names = []
+        
+        for result in all_results:
+            imp_df = result['importances_df']
+            
+            if imp_df.empty:
+                continue
+            
+            # Prova diverse strutture possibili
+            if 'Feature' in imp_df.columns and 'Importance_Std' in imp_df.columns:
+                # Struttura standard
+                avg_importance = imp_df.groupby('Feature')['Importance_Std'].mean()
+                avg_importance = avg_importance.reindex(FEATURES, fill_value=0)
+                valid_importances.append(avg_importance.values)
+                valid_names.append(result['dataset_name'])
+            elif 'Feature' in imp_df.columns and 'Importance' in imp_df.columns:
+                # Usa 'Importance' invece di 'Importance_Std'
+                avg_importance = imp_df.groupby('Feature')['Importance'].mean()
+                avg_importance = avg_importance.reindex(FEATURES, fill_value=0)
+                valid_importances.append(avg_importance.values)
+                valid_names.append(result['dataset_name'])
+            elif len(imp_df.columns) >= 2:
+                # Prova con le prime due colonne
+                col_feature = imp_df.columns[0]
+                col_importance = imp_df.columns[1]
+                avg_importance = imp_df.groupby(col_feature)[col_importance].mean()
+                avg_importance = avg_importance.reindex(FEATURES, fill_value=0)
+                valid_importances.append(avg_importance.values)
+                valid_names.append(result['dataset_name'])
+        
+        if len(valid_importances) >= 2:  # Almeno 2 dataset per fare un confronto
+            fig, ax = plt.subplots(figsize=(12, 8))
+            
+            importance_matrix = np.array(valid_importances)
+            
+            # Crea heatmap
+            sns.heatmap(importance_matrix, annot=True, fmt='.3f', cmap='YlOrRd',
+                        xticklabels=[f.replace('_', ' ') for f in FEATURES],
+                        yticklabels=valid_names,
+                        cbar_kws={'label': 'Feature Importance'}, ax=ax)
+            
+            ax.set_title('Confronto Feature Importance tra Dataset', fontsize=14, fontweight='bold')
+            plt.xticks(rotation=45, ha='right')
+            plt.yticks(rotation=0)
+            plt.tight_layout()
+            plt.savefig(output_dir / 'comparison_feature_importance_heatmap.png', dpi=300, bbox_inches='tight')
+            plt.close()
+            print(f"  ✓ Salvato: comparison_feature_importance_heatmap.png")
+        else:
+            plt.close()
+            print(f"  ⚠ Skip: comparison_feature_importance_heatmap.png (dati insufficienti: {len(valid_importances)} dataset)")
+    except Exception as e:
+        plt.close()
+        print(f"  ⚠ Errore durante creazione heatmap: {e}")
+        import traceback
+        traceback.print_exc()
     
     # -------------------------------------------------------------------------
     # 4. Box-plot degli errori per dataset
     # -------------------------------------------------------------------------
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
-    all_errors = []
-    labels = []
-    
-    for result in all_results:
-        df = result['predictions_df']
-        mlp_data = df[df['Model'] == 'MLP (multi-feature)']
-        errors = mlp_data['Error'].values
-        all_errors.append(errors)
-        labels.append(f"{result['dataset_name']}\n(n={result['n_patients']})")
-    
-    bp = ax.boxplot(all_errors, labels=labels, patch_artist=True)
-    
-    # Colora boxes
-    colors = sns.color_palette("viridis", len(all_errors))
-    for patch, color in zip(bp['boxes'], colors):
-        patch.set_facecolor(color)
-        patch.set_alpha(0.7)
-    
-    ax.set_ylabel('Errore di Predizione (%)', fontsize=12)
-    ax.set_title('Distribuzione Errori per Dataset', fontsize=14, fontweight='bold')
-    ax.axhline(0, color='red', linestyle='--', linewidth=1, alpha=0.5)
-    ax.grid(axis='y', alpha=0.3)
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    plt.savefig(output_dir / 'comparison_error_distributions.png', dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"  ✓ Salvato: comparison_error_distributions.png")
+    try:
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        all_errors = []
+        labels = []
+        
+        for result in all_results:
+            df = result['predictions_df']
+            
+            # Estratto errori in base alla struttura disponibile
+            if 'Error' in df.columns:
+                # Se c'è già la colonna Error
+                if 'Model' in df.columns:
+                    # Filtra per MLP se esiste la colonna Model
+                    mlp_data = df[df['Model'] == 'MLP (multi-feature)']
+                    if len(mlp_data) > 0:
+                        errors = mlp_data['Error'].values
+                    else:
+                        errors = df['Error'].values
+                else:
+                    # Usa tutte le righe
+                    errors = df['Error'].values
+            elif 'Actual' in df.columns and 'Predicted' in df.columns:
+                # Calcola l'errore da Actual e Predicted
+                if 'Model' in df.columns:
+                    mlp_data = df[df['Model'] == 'MLP (multi-feature)']
+                    if len(mlp_data) > 0:
+                        errors = mlp_data['Predicted'].values - mlp_data['Actual'].values
+                    else:
+                        errors = df['Predicted'].values - df['Actual'].values
+                else:
+                    errors = df['Predicted'].values - df['Actual'].values
+            else:
+                # Salta questo dataset se non ci sono dati utilizzabili
+                print(f"  ⚠ Colonne mancanti per {result['dataset_name']}: {list(df.columns)}")
+                continue
+            
+            all_errors.append(errors)
+            labels.append(f"{result['dataset_name']}\n(n={result['n_patients']})")
+        
+        if len(all_errors) > 0:
+            bp = ax.boxplot(all_errors, labels=labels, patch_artist=True)
+            
+            # Colora boxes
+            colors = sns.color_palette("viridis", len(all_errors))
+            for patch, color in zip(bp['boxes'], colors):
+                patch.set_facecolor(color)
+                patch.set_alpha(0.7)
+            
+            ax.set_ylabel('Errore di Predizione (%)', fontsize=12)
+            ax.set_title('Distribuzione Errori per Dataset', fontsize=14, fontweight='bold')
+            ax.axhline(0, color='red', linestyle='--', linewidth=1, alpha=0.5)
+            ax.grid(axis='y', alpha=0.3)
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            plt.savefig(output_dir / 'comparison_error_distributions.png', dpi=300, bbox_inches='tight')
+            plt.close()
+            print(f"  ✓ Salvato: comparison_error_distributions.png")
+        else:
+            plt.close()
+            print(f"  ⚠ Skip: comparison_error_distributions.png (nessun dato valido)")
+    except Exception as e:
+        plt.close()
+        print(f"  ⚠ Errore durante creazione boxplot: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def create_summary_table(all_results, output_dir):
@@ -366,36 +450,42 @@ def create_summary_table(all_results, output_dir):
     print("  CREAZIONE TABELLA RIASSUNTIVA")
     print(f"{'='*80}")
     
-    summary_data = []
-    
-    for result in all_results:
-        summary_data.append({
-            'Dataset': result['dataset_name'],
-            'N_Patients': result['n_patients'],
-            'R2': result['R2'],
-            'MAE': result['MAE'],
-            'RMSE': result['RMSE'],
-            'MAE/RMSE_ratio': result['MAE'] / result['RMSE'] if result['RMSE'] > 0 else np.nan
-        })
-    
-    df_summary = pd.DataFrame(summary_data)
-    
-    # Ordina per R² decrescente
-    df_summary = df_summary.sort_values('R2', ascending=False)
-    
-    # Aggiungi ranking
-    df_summary.insert(0, 'Rank', range(1, len(df_summary) + 1))
-    
-    # Salva
-    df_summary.to_csv(output_dir / 'overall_summary.csv', index=False)
-    
-    print(f"\n  RANKING DATASET PER R²:")
-    print(f"  {'─'*80}")
-    print(df_summary.to_string(index=False))
-    print(f"  {'─'*80}")
-    print(f"  ✓ Tabella salvata: overall_summary.csv")
-    
-    return df_summary
+    try:
+        summary_data = []
+        
+        for result in all_results:
+            summary_data.append({
+                'Dataset': result['dataset_name'],
+                'N_Patients': result['n_patients'],
+                'R2': result['R2'],
+                'MAE': result['MAE'],
+                'RMSE': result['RMSE'],
+                'MAE/RMSE_ratio': result['MAE'] / result['RMSE'] if result['RMSE'] > 0 else np.nan
+            })
+        
+        df_summary = pd.DataFrame(summary_data)
+        
+        # Ordina per R² decrescente
+        df_summary = df_summary.sort_values('R2', ascending=False)
+        
+        # Aggiungi ranking
+        df_summary.insert(0, 'Rank', range(1, len(df_summary) + 1))
+        
+        # Salva
+        df_summary.to_csv(output_dir / 'overall_summary.csv', index=False)
+        
+        print(f"\n  RANKING DATASET PER R²:")
+        print(f"  {'─'*80}")
+        print(df_summary.to_string(index=False))
+        print(f"  {'─'*80}")
+        print(f"  ✓ Tabella salvata: overall_summary.csv")
+        
+        return df_summary
+    except Exception as e:
+        print(f"  ✗ Errore durante creazione tabella: {e}")
+        # Ritorna DataFrame vuoto in caso di errore
+        return pd.DataFrame({'Dataset': [r['dataset_name'] for r in all_results],
+                           'R2': [r['R2'] for r in all_results]})
 
 
 # ============================================================================
@@ -440,13 +530,7 @@ def main():
     print(f"  TEST COMPLETATI: {len(all_results)}/{len(DATASETS)} dataset")
     print(f"{'='*80}")
     
-    # Crea plot comparativi (solo se ci sono 2+ dataset)
-    if len(all_results) >= 2:
-        create_comparison_plots(all_results, OUTPUT_DIR)
-    else:
-        print(f"\n  ℹ️  Solo 1 dataset, skip plot comparativi")
-    
-    # Crea tabella riassuntiva
+    # Crea tabella riassuntiva (unico output comparativo)
     summary_df = create_summary_table(all_results, OUTPUT_DIR)
     
     # Report finale
@@ -454,27 +538,28 @@ def main():
     print("  ANALISI COMPLETA")
     print(f"{'='*80}")
     print(f"\n  📁 Directory output: {OUTPUT_DIR}")
-    print(f"\n  📊 BEST DATASET:")
-    best = summary_df.iloc[0]
-    print(f"     🏆 {best['Dataset']}")
-    print(f"        • N pazienti: {best['N_Patients']}")
-    print(f"        • R² = {best['R2']:.3f}")
-    print(f"        • MAE = {best['MAE']:.2f}%")
-    print(f"        • RMSE = {best['RMSE']:.2f}%")
+    
+    # Mostra best dataset solo se la tabella non è vuota
+    if not summary_df.empty and len(summary_df) > 0:
+        try:
+            print(f"\n  📊 BEST DATASET:")
+            best = summary_df.iloc[0]
+            print(f"     🏆 {best['Dataset']}")
+            if 'N_Patients' in best:
+                print(f"        • N pazienti: {int(best['N_Patients'])}")
+            print(f"        • R² = {best['R2']:.3f}")
+            if 'MAE' in best:
+                print(f"        • MAE = {best['MAE']:.2f}%")
+            if 'RMSE' in best:
+                print(f"        • RMSE = {best['RMSE']:.2f}%")
+        except Exception as e:
+            print(f"  ⚠ Impossibile mostrare best dataset: {e}")
     
     print(f"\n  📂 Sottodirectory per dataset:")
     for result in all_results:
         print(f"     • {result['dataset_name']}/")
     
-    if len(all_results) >= 2:
-        print(f"\n  📈 Plot comparativi:")
-        print(f"     • comparison_metrics_barplot.png")
-        print(f"     • comparison_r2_vs_size.png")
-        print(f"     • comparison_feature_importance_heatmap.png")
-        print(f"     • comparison_error_distributions.png")
-    
-    print(f"\n  📄 Tabella riassuntiva:")
-    print(f"     • overall_summary.csv")
+    print(f"\n  📄 Tabella riassuntiva: overall_summary.csv")
     
     print(f"\n{'='*80}\n")
 

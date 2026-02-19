@@ -653,7 +653,7 @@ class CompleteAirwayPipeline:
 def main():
 
 
-    INPUT_PATH = r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\airway_segmentation\test_data"
+    INPUT_PATH = r"X:\Francesca Saglimbeni\tesi\datasets\dataset_CARVE"
     OUTPUT_DIR = "output_results_with_fibrosis"
     BATCH_MODE = True
     FAST_SEGMENTATION = False
