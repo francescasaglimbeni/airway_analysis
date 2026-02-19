@@ -1,0 +1,4 @@
+Dataset,Total_Patients,With_FVC_Drop,With_Decline,With_Both,FVC_Only,Decline_Only
+strict,39,22,39,22,0,17
+balanced,39,32,39,32,0,7
+all,39,34,39,34,0,5

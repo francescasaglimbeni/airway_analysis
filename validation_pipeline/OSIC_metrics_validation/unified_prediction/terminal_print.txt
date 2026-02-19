@@ -1,0 +1,434 @@
+PS X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation> py .\fvc_prediction.py
+
+================================================================================
+UNIFIED FVC PREDICTION ANALYSIS - V2
+================================================================================
+✓ Traditional approach: Week0, Week52, Drop
+✓ Direct decline: Annual FVC decline from regression
+✓ UNIFIED dataset with BOTH targets
+✓ Multiple quality levels: strict, balanced, all
+================================================================================
+Loading clinical data...
+  Loaded 1554 clinical records
+  Unique patients: 176
+
+Loading validation results...
+  Total cases: 45
+  RELIABLE cases: 40
+
+Processing 176 patients with BALANCED LOGIC...
+
+============================================================ 
+BALANCED INTERPOLATION STATISTICS
+============================================================ 
+
+WEEK 0 Results (total 176 patients):
+  Preferred window [-5, 15]: 92 patients
+  Extended window [15, 30]: 51 patients
+  Last resort (≤40 weeks): 0 patients
+  Failed/no data: 33 patients
+
+WEEK 52 Results (total 176 patients):
+  Preferred window [40, 65]: 169 patients
+  Regression/other: 7 patients
+  Failed/no data: 0 patients
+
+Complete cases (both week0 and week52): 143 (81.2%)
+
+✓ Saved: 01_interpolated_fvc.csv
+
+Calculating direct annual decline...
+  Direct decline calculated for: 176/176 patients (100.0%)
+✓ Saved: 02_direct_decline.csv
+
+================================================================================
+CREATING UNIFIED DATASETS WITH MULTIPLE QUALITY LEVELS       
+================================================================================
+
+[1/3] Creating STRICT dataset (highest quality)...
+
+Integrating airway metrics with FVC + Decline (quality=strict)...
+
+  📊 DATA LOADING STATISTICS:
+    Total reliable cases: 40
+    Successfully integrated: 40
+    Skipped - no FVC data: 0
+    Skipped - no advanced metrics JSON: 0
+    Cases with missing parenchymal metrics: 1 (2.5%)
+    Cases with missing airway metric keys: 0
+    Cases with missing parenchymal keys: 1
+  Total patients: 40
+    • With FVC drop only: 0
+    • With decline only: 18
+    • With BOTH: 22
+  FVC drop available: 22/40 (55.0%)
+  Decline available: 40/40 (100.0%)
+
+  🔍 DIAGNOSTIC - Checking for NaN values in features:       
+    ⚠ mean_lung_density_HU: 1/40 NaN (2.5%)
+    ⚠ histogram_entropy: 1/40 NaN (2.5%)
+
+  ✓ Patients with ALL features complete: 39/40 (97.5%)       
+  ⚠ 1 patients have at least one missing feature
+  ✓ Saved: dataset_strict.csv
+
+[2/3] Creating BALANCED dataset (recommended)...
+
+Integrating airway metrics with FVC + Decline (quality=balanced)...
+
+  📊 DATA LOADING STATISTICS:
+    Total reliable cases: 40
+    Successfully integrated: 40
+    Skipped - no FVC data: 0
+    Skipped - no advanced metrics JSON: 0
+    Cases with missing parenchymal metrics: 1 (2.5%)
+    Cases with missing airway metric keys: 0
+    Cases with missing parenchymal keys: 1
+  Total patients: 40
+    • With FVC drop only: 0
+    • With decline only: 8
+    • With BOTH: 32
+  FVC drop available: 32/40 (80.0%)
+  Decline available: 40/40 (100.0%)
+
+  🔍 DIAGNOSTIC - Checking for NaN values in features:       
+    ⚠ mean_lung_density_HU: 1/40 NaN (2.5%)
+    ⚠ histogram_entropy: 1/40 NaN (2.5%)
+
+  ✓ Patients with ALL features complete: 39/40 (97.5%)       
+  ⚠ 1 patients have at least one missing feature
+  ✓ Saved: dataset_balanced.csv
+
+[3/3] Creating ALL dataset (no quality filter)...
+
+Integrating airway metrics with FVC + Decline (quality=all)...
+
+  📊 DATA LOADING STATISTICS:
+    Total reliable cases: 40
+    Successfully integrated: 40
+    Skipped - no FVC data: 0
+    Skipped - no advanced metrics JSON: 0
+    Cases with missing parenchymal metrics: 1 (2.5%)
+    Cases with missing airway metric keys: 0
+    Cases with missing parenchymal keys: 1
+  Total patients: 40
+    • With FVC drop only: 0
+    • With decline only: 6
+    • With BOTH: 34
+  FVC drop available: 34/40 (85.0%)
+  Decline available: 40/40 (100.0%)
+
+  🔍 DIAGNOSTIC - Checking for NaN values in features:       
+    ⚠ mean_lung_density_HU: 1/40 NaN (2.5%)
+    ⚠ histogram_entropy: 1/40 NaN (2.5%)
+
+  ✓ Patients with ALL features complete: 39/40 (97.5%)       
+  ⚠ 1 patients have at least one missing feature
+  ✓ Saved: dataset_all.csv
+
+================================================================================
+CREATING SPECIALIZED DATASETS
+================================================================================
+  ✓ dataset_traditional_only.csv: 32 patients
+  ✓ dataset_decline_only.csv: 40 patients
+  ✓ dataset_both_targets.csv: 32 patients (BOTH targets)     
+
+================================================================================
+QUALITY DISTRIBUTION SUMMARY
+================================================================================
+
+ Dataset  Total_Patients  With_FVC_Drop  With_Decline  With_Both  FVC_Only  Decline_Only
+  strict              40             22            40        
+ 22         0            18
+balanced              40             32            40        
+ 32         0             8
+     all              40             34            40        
+ 34         0             6
+
+✓ Saved: quality_summary.csv
+
+================================================================================
+CREATING UNIFIED PREDICTION PLOTS (2x2 grid)
+Using BALANCED dataset (recommended)
+================================================================================
+  Creating plot for: mean_peripheral_branch_volume_mm3       
+  Creating plot for: peripheral_branch_density
+  Creating plot for: mean_peripheral_diameter_mm
+  Creating plot for: central_to_peripheral_diameter_ratio
+  Creating plot for: mean_lung_density_HU
+  Creating plot for: histogram_entropy
+
+✓ All plots saved in: X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\unified_prediction\plots
+
+================================================================================
+CREATING PREDICTION PERFORMANCE SUMMARY
+================================================================================
+
+✓ Saved unified summary: prediction_performance_summary.csv  
+
+🏆 TOP FEATURES for Direct Annual Decline (highest R²):      
+  mean_peripheral_branch_volume_mm3: R² = -0.000, MAE = 6.72%/year (n=40)
+  histogram_entropy: R² = -0.018, MAE = 6.86%/year (n=39)    
+  mean_lung_density_HU: R² = -0.050, MAE = 6.84%/year (n=39) 
+✓ Saved: performance_comparison_pivot.csv
+
+================================================================================
+✓ ANALYSIS COMPLETE
+================================================================================
+
+📁 Output directory: X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\unified_prediction
+
+📊 RAW DATA:
+  01_interpolated_fvc.csv       - FVC interpolated (all patients)
+  02_direct_decline.csv         - Direct decline (all patients)
+
+📊 UNIFIED DATASETS (with BOTH targets):
+  dataset_strict.csv            - Highest quality (n=40)     
+  dataset_balanced.csv          - Balanced quality - RECOMMENDED (n=40)
+  dataset_all.csv               - All data (n=40)
+
+📊 SPECIALIZED DATASETS:
+  dataset_traditional_only.csv  - Only FVC drop (n=32)       
+  dataset_decline_only.csv      - Only annual decline (n=40) 
+  dataset_both_targets.csv      - BOTH drop & decline (n=32) 
+
+📄 SUMMARY:
+  quality_summary.csv                   - Quality distribution across datasets
+  prediction_performance_summary.csv    - Prediction performance for all features
+  performance_comparison_pivot.csv      - Pivot table for easy comparison
+
+🖼️  PLOTS:
+  plots/ - 2x2 scatter plots for each feature (4 targets: Week0, Week52, Drop, Decline)
+
+💡 RECOMMENDED FOR TESTING:
+  • For Week52 prediction: dataset_balanced.csv or dataset_traditional_only.csv
+  • For Decline prediction: dataset_balanced.csv or dataset_decline_only.csv
+  • For comparing both: dataset_both_targets.csv
+
+💡 WHY DIFFERENT PATIENT NUMBERS?
+  • FVC drop requires Week0 AND Week52 with good quality     
+  • Some patients have one but not the other!
+  • dataset_both_targets.csv has only patients with BOTH ✓   
+
+================================================================================
+
+PS X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation> ^C
+PS X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation> py .\fvc_prediction.py    
+
+================================================================================
+UNIFIED FVC PREDICTION ANALYSIS - V2
+================================================================================
+✓ Traditional approach: Week0, Week52, Drop
+✓ Direct decline: Annual FVC decline from regression
+✓ UNIFIED dataset with BOTH targets
+✓ Multiple quality levels: strict, balanced, all
+================================================================================
+Loading clinical data...
+  Loaded 1554 clinical records
+  Unique patients: 176
+
+Loading validation results...
+  Total cases: 45
+  RELIABLE cases: 40
+
+Processing 176 patients with BALANCED LOGIC...
+
+============================================================ 
+BALANCED INTERPOLATION STATISTICS
+============================================================ 
+
+WEEK 0 Results (total 176 patients):
+  Preferred window [-5, 15]: 92 patients
+  Extended window [15, 30]: 51 patients
+  Last resort (≤40 weeks): 0 patients
+  Failed/no data: 33 patients
+
+WEEK 52 Results (total 176 patients):
+  Preferred window [40, 65]: 169 patients
+  Regression/other: 7 patients
+  Failed/no data: 0 patients
+
+Complete cases (both week0 and week52): 143 (81.2%)
+
+✓ Saved: 01_interpolated_fvc.csv
+
+Calculating direct annual decline...
+  Direct decline calculated for: 176/176 patients (100.0%)
+✓ Saved: 02_direct_decline.csv
+
+================================================================================
+CREATING UNIFIED DATASETS WITH MULTIPLE QUALITY LEVELS       
+================================================================================
+
+[1/3] Creating STRICT dataset (highest quality)...
+
+Integrating airway metrics with FVC + Decline (quality=strict)...
+
+  📊 DATA LOADING STATISTICS:
+    Total reliable cases: 40
+    Successfully integrated: 40
+    Skipped - no FVC data: 0
+    Skipped - no advanced metrics JSON: 0
+    Cases with missing parenchymal metrics: 1 (2.5%)
+    Cases with missing airway metric keys: 0
+    Cases with missing parenchymal keys: 1
+  Total patients: 40
+    • With FVC drop only: 0
+    • With decline only: 18
+    • With BOTH: 22
+  FVC drop available: 22/40 (55.0%)
+  Decline available: 40/40 (100.0%)
+
+  🔍 DIAGNOSTIC - Checking for NaN values in features:       
+    ⚠ mean_lung_density_HU: 1/40 NaN (2.5%)
+    ⚠ histogram_entropy: 1/40 NaN (2.5%)
+
+  ✓ Patients with ALL features complete: 39/40 (97.5%)       
+  ⚠ 1 patients have at least one missing feature
+  → These patients will be removed to ensure dataset quality 
+  ✓ Final dataset size: 39 patients (all features complete)  
+  ✓ Saved: dataset_strict.csv
+
+[2/3] Creating BALANCED dataset (recommended)...
+
+Integrating airway metrics with FVC + Decline (quality=balanced)...
+
+  📊 DATA LOADING STATISTICS:
+    Total reliable cases: 40
+    Successfully integrated: 40
+    Skipped - no FVC data: 0
+    Skipped - no advanced metrics JSON: 0
+    Cases with missing parenchymal metrics: 1 (2.5%)
+    Cases with missing airway metric keys: 0
+    Cases with missing parenchymal keys: 1
+  Total patients: 40
+    • With FVC drop only: 0
+    • With decline only: 8
+    • With BOTH: 32
+  FVC drop available: 32/40 (80.0%)
+  Decline available: 40/40 (100.0%)
+
+  🔍 DIAGNOSTIC - Checking for NaN values in features:       
+    ⚠ mean_lung_density_HU: 1/40 NaN (2.5%)
+    ⚠ histogram_entropy: 1/40 NaN (2.5%)
+
+  ✓ Patients with ALL features complete: 39/40 (97.5%)       
+  ⚠ 1 patients have at least one missing feature
+  → These patients will be removed to ensure dataset quality 
+  ✓ Final dataset size: 39 patients (all features complete)  
+  ✓ Saved: dataset_balanced.csv
+
+[3/3] Creating ALL dataset (no quality filter)...
+
+Integrating airway metrics with FVC + Decline (quality=all)...
+
+  📊 DATA LOADING STATISTICS:
+    Total reliable cases: 40
+    Successfully integrated: 40
+    Skipped - no FVC data: 0
+    Skipped - no advanced metrics JSON: 0
+    Cases with missing parenchymal metrics: 1 (2.5%)
+    Cases with missing airway metric keys: 0
+    Cases with missing parenchymal keys: 1
+  Total patients: 40
+    • With FVC drop only: 0
+    • With decline only: 6
+    • With BOTH: 34
+  FVC drop available: 34/40 (85.0%)
+  Decline available: 40/40 (100.0%)
+
+  🔍 DIAGNOSTIC - Checking for NaN values in features:       
+    ⚠ mean_lung_density_HU: 1/40 NaN (2.5%)
+    ⚠ histogram_entropy: 1/40 NaN (2.5%)
+
+  ✓ Patients with ALL features complete: 39/40 (97.5%)       
+  ⚠ 1 patients have at least one missing feature
+  → These patients will be removed to ensure dataset quality 
+  ✓ Final dataset size: 39 patients (all features complete)  
+  ✓ Saved: dataset_all.csv
+
+================================================================================
+CREATING SPECIALIZED DATASETS
+================================================================================
+  ✓ dataset_traditional_only.csv: 32 patients
+  ✓ dataset_decline_only.csv: 39 patients
+  ✓ dataset_both_targets.csv: 32 patients (BOTH targets)     
+
+================================================================================
+QUALITY DISTRIBUTION SUMMARY
+================================================================================
+
+ Dataset  Total_Patients  With_FVC_Drop  With_Decline  With_Both  FVC_Only  Decline_Only
+  strict              39             22            39        
+ 22         0            17
+balanced              39             32            39        
+ 32         0             7
+     all              39             34            39        
+ 34         0             5
+
+✓ Saved: quality_summary.csv
+
+================================================================================
+CREATING UNIFIED PREDICTION PLOTS (2x2 grid)
+Using BALANCED dataset (recommended)
+================================================================================
+  Creating plot for: mean_peripheral_branch_volume_mm3       
+  Creating plot for: peripheral_branch_density
+  Creating plot for: mean_peripheral_diameter_mm
+  Creating plot for: central_to_peripheral_diameter_ratio
+  Creating plot for: mean_lung_density_HU
+  Creating plot for: histogram_entropy
+
+✓ All plots saved in: X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\unified_prediction\plots
+
+================================================================================
+CREATING PREDICTION PERFORMANCE SUMMARY
+================================================================================
+
+✓ Saved unified summary: prediction_performance_summary.csv  
+
+🏆 TOP FEATURES for Direct Annual Decline (highest R²):      
+  mean_peripheral_branch_volume_mm3: R² = -0.008, MAE = 6.70%/year (n=39)
+  histogram_entropy: R² = -0.018, MAE = 6.86%/year (n=39)    
+  mean_lung_density_HU: R² = -0.050, MAE = 6.84%/year (n=39) 
+✓ Saved: performance_comparison_pivot.csv
+
+================================================================================
+✓ ANALYSIS COMPLETE
+================================================================================
+
+📁 Output directory: X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation\unified_prediction
+
+📊 RAW DATA:
+  01_interpolated_fvc.csv       - FVC interpolated (all patients)
+  02_direct_decline.csv         - Direct decline (all patients)
+
+📊 UNIFIED DATASETS (with BOTH targets):
+  dataset_strict.csv            - Highest quality (n=39)     
+  dataset_balanced.csv          - Balanced quality - RECOMMENDED (n=39)
+  dataset_all.csv               - All data (n=39)
+
+📊 SPECIALIZED DATASETS:
+  dataset_traditional_only.csv  - Only FVC drop (n=32)       
+  dataset_decline_only.csv      - Only annual decline (n=39)
+  dataset_both_targets.csv      - BOTH drop & decline (n=32) 
+
+📄 SUMMARY:
+  quality_summary.csv                   - Quality distribution across datasets
+  prediction_performance_summary.csv    - Prediction performance for all features
+  performance_comparison_pivot.csv      - Pivot table for easy comparison
+
+🖼️  PLOTS:
+  plots/ - 2x2 scatter plots for each feature (4 targets: Week0, Week52, Drop, Decline)
+
+💡 RECOMMENDED FOR TESTING:
+  • For Week52 prediction: dataset_balanced.csv or dataset_traditional_only.csv
+  • For Decline prediction: dataset_balanced.csv or dataset_decline_only.csv
+  • For comparing both: dataset_both_targets.csv
+
+💡 WHY DIFFERENT PATIENT NUMBERS?
+  • FVC drop requires Week0 AND Week52 with good quality     
+  • Decline requires ≥3 measurements spanning reasonable time  • Some patients have one but not the other!
+  • dataset_both_targets.csv has only patients with BOTH ✓   
+
+================================================================================

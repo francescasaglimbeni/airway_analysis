@@ -1,0 +1,95 @@
+{
+  "mlp": {
+    "model": "MLP",
+    "config_id": 2,
+    "performance": {
+      "R2": -1.9259,
+      "MAE": 30.6,
+      "RMSE": 33.99
+    },
+    "parameters": {
+      "h1": 16,
+      "h2": 8,
+      "dropout": 0.2,
+      "lr": 0.001,
+      "wd": 0.0001
+    }
+  },
+  "ensemble": {
+    "model": "Ensemble",
+    "config_id": 74,
+    "performance": {
+      "R2": 0.4075,
+      "MAE": 11.94,
+      "RMSE": 15.29
+    },
+    "parameters": {
+      "ridge_weight": 0.7,
+      "rf_weight": 0.3
+    }
+  },
+  "xgboost": {
+    "model": "XGBoost",
+    "config_id": 2,
+    "performance": {
+      "R2": 0.2617,
+      "MAE": 14.56,
+      "RMSE": 17.07
+    },
+    "parameters": {
+      "n_estimators": 100,
+      "max_depth": 2,
+      "learning_rate": 0.1,
+      "reg_alpha": 1.0,
+      "reg_lambda": 1.0
+    }
+  },
+  "ridge": {
+    "model": "Ridge",
+    "config_id": 74,
+    "performance": {
+      "R2": 0.3591,
+      "MAE": 12.38,
+      "RMSE": 15.91
+    },
+    "parameters": {
+      "alpha": 5.0
+    }
+  },
+  "random_forest": {
+    "model": "Random Forest",
+    "config_id": 2,
+    "performance": {
+      "R2": 0.3947,
+      "MAE": 12.23,
+      "RMSE": 15.46
+    },
+    "parameters": {
+      "n_estimators": 100,
+      "max_depth": 2,
+      "min_samples_split": 5,
+      "min_samples_leaf": 2
+    }
+  },
+  "lasso": {
+    "model": "Lasso",
+    "config_id": 20,
+    "performance": {
+      "R2": 0.3118,
+      "MAE": 12.77,
+      "RMSE": 16.48
+    },
+    "parameters": {
+      "alpha": 0.5
+    }
+  },
+  "lr": {
+    "model": "Linear Regression",
+    "config_id": 2,
+    "performance": {
+      "R2": -0.1078,
+      "MAE": 16.46,
+      "RMSE": 20.91
+    }
+  }
+}
