@@ -1,11 +1,3 @@
-"""
-TEST MODELLI SU DATASET DA UNIFIED SCRIPT V2 - WEEK52 PREDICTION
-Testa la predizione di FVC_percent_week52 sui dataset generati da:
-- unified_fvc_prediction_v2.py
-
-Valuta le performance sui diversi livelli di qualità e dataset specializzati.
-"""
-
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -26,7 +18,7 @@ from evaluation.visualization import plot_all_results
 # CONFIGURAZIONE PATHS
 # ============================================================================
 
-BASE_DIR = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation")
+BASE_DIR = Path(r"/content/airway_analysis/validation_pipeline/OSIC_metrics_validation")
 
 # Dataset da unified_prediction/
 UNIFIED_DIR = BASE_DIR / "unified_prediction"
@@ -41,8 +33,8 @@ DATASETS = {
 
 # Output
 OUTPUT_DIR = Path(
-    r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline"
-    r"\validation_test_models\week52_unified_v2_comparison"
+    r"airway_analysis/validation_pipeline"
+    r"/validation_test_models/week52pred_dataset_comparison"
 )
 
 # ============================================================================
@@ -73,7 +65,44 @@ EPOCHS_MAX = 500
 PATIENCE = 100
 VAL_FRACTION = 0.20
 N_INNER_SPLITS = 10
+# SEED = 42
 SEED = 42
+EPOCHS_MAX = 500
+PATIENCE = 100
+VAL_FRACTION = 0.20
+N_INNER_SPLITS = 10
+
+# Best configs dalla grid search (balanced)
+BEST_CONFIG = {
+    'hidden1': 16,
+    'hidden2': 8,
+    'dropout': 0.2,
+    'learning_rate': 1e-3,
+    'weight_decay': 1e-4,
+    'epochs_max': EPOCHS_MAX,
+    'patience': PATIENCE,
+    'val_fraction': VAL_FRACTION,
+    'n_inner_splits': N_INNER_SPLITS,
+    'seed': SEED,
+    # Ridge best
+    'ridge_alpha': 5.0,
+    # Lasso best
+    'lasso_alpha': 0.5,
+    # RF best
+    'rf_n_estimators': 100,
+    'rf_max_depth': 2,
+    'rf_min_samples_split': 5,
+    'rf_min_samples_leaf': 2,
+    # XGBoost best
+    'xgb_n_estimators': 100,
+    'xgb_max_depth': 2,
+    'xgb_learning_rate': 0.1,
+    'xgb_reg_alpha': 1.0,
+    'xgb_reg_lambda': 1.0,
+    # Ensemble best
+    'ensemble_ridge_weight': 0.7,
+    'ensemble_rf_weight': 0.3,
+}
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -118,7 +147,7 @@ def test_single_dataset(dataset_name, dataset_path, output_subdir):
         
         # 2. Esegui LOOCV
         print(f"\n  [2/4] Esecuzione LOOCV ({n_patients} fold)...")
-        results_df, all_importances, fold_curves = run_loocv(
+        '''results_df, all_importances, fold_curves = run_loocv(
             df=df_clean,
             features=FEATURES,
             target=TARGET,
@@ -141,20 +170,38 @@ def test_single_dataset(dataset_name, dataset_path, output_subdir):
                 'xgb_reg_alpha': 2.0,
                 'xgb_reg_lambda': 2.0,
             }
-        )
+        )'''
         
+        results_df, all_importances, fold_curves = run_loocv(
+            df=df_clean,
+            features=FEATURES,
+            target=TARGET,
+            device=DEVICE,
+            config=BEST_CONFIG
+        )
+                
         # 3. Calcola metriche
         print(f"\n  [3/4] Calcolo metriche aggregate...")
         summary_df = compute_aggregate_metrics(results_df)
         
         # Estrai metriche MLP
-        mlp_row = summary_df[summary_df['Model'] == 'MLP (multi-feature)']
+        '''mlp_row = summary_df[summary_df['Model'] == 'MLP (multi-feature)']
         r2 = float(mlp_row['R²'].values[0])
         mae = float(mlp_row['MAE'].values[0])
         rmse = float(mlp_row['RMSE'].values[0])
         
         print(f"        ✓ R² = {r2:.3f}, MAE = {mae:.2f}, RMSE = {rmse:.2f}")
-        
+        '''
+        print("        ✓ Metriche per modello:")
+        for _, row in summary_df.iterrows():
+            print(f"           {row['Model']}: R²={float(row['R²']):.3f}, MAE={float(row['MAE']):.2f}, RMSE={float(row['RMSE']):.2f}")
+
+        # Prendi il modello migliore per R² come riferimento del dataset
+        best_model_row = summary_df.loc[summary_df['R²'].astype(float).idxmax()]
+        r2 = float(best_model_row['R²'])
+        mae = float(best_model_row['MAE'])
+        rmse = float(best_model_row['RMSE'])
+        best_model_name = best_model_row['Model']
         # 4. Salva risultati
         print(f"\n  [4/4] Salvataggio risultati...")
         output_subdir.mkdir(parents=True, exist_ok=True)
@@ -180,12 +227,23 @@ def test_single_dataset(dataset_name, dataset_path, output_subdir):
         
         print(f"        ✓ Risultati salvati in: {output_subdir.name}/")
         
+        '''return {
+            'dataset_name': dataset_name,
+            'n_patients': n_patients,
+            'R2': r2,
+            'MAE': mae,
+            'RMSE': rmse,
+            'predictions_df': results_df,
+            'summary_df': summary_df,
+            'importances_df': importance_df
+        }'''
         return {
             'dataset_name': dataset_name,
             'n_patients': n_patients,
             'R2': r2,
             'MAE': mae,
             'RMSE': rmse,
+            'best_model': best_model_name,
             'predictions_df': results_df,
             'summary_df': summary_df,
             'importances_df': importance_df
@@ -442,7 +500,7 @@ def create_comparison_plots(all_results, output_dir):
         traceback.print_exc()
 
 
-def create_summary_table(all_results, output_dir):
+'''def create_summary_table(all_results, output_dir):
     """
     Crea tabella riassuntiva con tutte le metriche
     """
@@ -486,7 +544,67 @@ def create_summary_table(all_results, output_dir):
         # Ritorna DataFrame vuoto in caso di errore
         return pd.DataFrame({'Dataset': [r['dataset_name'] for r in all_results],
                            'R2': [r['R2'] for r in all_results]})
+'''
 
+def create_summary_table(all_results, output_dir):
+    print(f"\n{'='*80}")
+    print("  CREAZIONE TABELLA RIASSUNTIVA")
+    print(f"{'='*80}")
+
+    try:
+        # Tabella per modello x dataset
+        rows = []
+        for result in all_results:
+            for _, row in result['summary_df'].iterrows():
+                rows.append({
+                    'Dataset': result['dataset_name'],
+                    'N_Patients': result['n_patients'],
+                    'Model': row['Model'],
+                    'R2': float(row['R²']),
+                    'MAE': float(row['MAE']),
+                    'RMSE': float(row['RMSE']),
+                })
+
+        df_long = pd.DataFrame(rows)
+        df_long.to_csv(output_dir / 'overall_summary_all_models.csv', index=False)
+
+        # Pivot: righe=dataset, colonne=modello
+        pivot = df_long.pivot_table(
+            index=['Dataset', 'N_Patients'],
+            columns='Model',
+            values='R2'
+        ).reset_index()
+        pivot.to_csv(output_dir / 'overall_summary_pivot_r2.csv', index=False)
+
+        # Tabella best model per dataset (come prima ma corretta)
+        summary_data = []
+        for result in all_results:
+            summary_data.append({
+                'Dataset': result['dataset_name'],
+                'N_Patients': result['n_patients'],
+                'Best_Model': result['best_model'],
+                'Best_R2': result['R2'],
+                'Best_MAE': result['MAE'],
+                'Best_RMSE': result['RMSE'],
+            })
+
+        df_best = pd.DataFrame(summary_data).sort_values('Best_R2', ascending=False)
+        df_best.insert(0, 'Rank', range(1, len(df_best) + 1))
+        df_best.to_csv(output_dir / 'overall_summary.csv', index=False)
+
+        print(f"\n  RANKING DATASET (per best model R²):")
+        print(df_best.to_string(index=False))
+
+        print(f"\n  PIVOT R² (tutti i modelli):")
+        print(pivot.to_string(index=False))
+
+        return df_best, df_long
+
+    except Exception as e:
+        print(f"  ✗ Errore: {e}")
+        import traceback
+        traceback.print_exc()
+        return pd.DataFrame(), pd.DataFrame()
 
 # ============================================================================
 # MAIN FUNCTION
@@ -531,7 +649,8 @@ def main():
     print(f"{'='*80}")
     
     # Crea tabella riassuntiva (unico output comparativo)
-    summary_df = create_summary_table(all_results, OUTPUT_DIR)
+    # summary_df = create_summary_table(all_results, OUTPUT_DIR)
+    summary_df, summary_long = create_summary_table(all_results, OUTPUT_DIR)
     
     # Report finale
     print(f"\n{'='*80}")
@@ -547,11 +666,12 @@ def main():
             print(f"     🏆 {best['Dataset']}")
             if 'N_Patients' in best:
                 print(f"        • N pazienti: {int(best['N_Patients'])}")
-            print(f"        • R² = {best['R2']:.3f}")
-            if 'MAE' in best:
-                print(f"        • MAE = {best['MAE']:.2f}%")
-            if 'RMSE' in best:
-                print(f"        • RMSE = {best['RMSE']:.2f}%")
+            print(f"        • Best Model: {best['Best_Model']}")
+            print(f"        • R² = {best['Best_R2']:.3f}")
+            if 'Best_MAE' in best:
+                print(f"        • MAE = {best['Best_MAE']:.2f}%")
+            if 'Best_RMSE' in best:
+                print(f"        • RMSE = {best['Best_RMSE']:.2f}%")
         except Exception as e:
             print(f"  ⚠ Impossibile mostrare best dataset: {e}")
     
