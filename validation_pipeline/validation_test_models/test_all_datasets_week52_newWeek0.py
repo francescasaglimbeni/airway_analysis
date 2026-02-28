@@ -18,7 +18,7 @@ from evaluation.visualization import plot_all_results
 # CONFIGURAZIONE PATHS
 # ============================================================================
 
-BASE_DIR = Path(r"/content/airway_analysis/validation_pipeline/OSIC_metrics_validation")
+BASE_DIR = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation")
 
 # Dataset da unified_prediction/
 UNIFIED_DIR = BASE_DIR / "unified_prediction"
@@ -33,8 +33,8 @@ DATASETS = {
 
 # Output
 OUTPUT_DIR = Path(
-    r"airway_analysis/validation_pipeline"
-    r"/validation_test_models/week52pred_dataset_comparison"
+    r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline"
+    r"\validation_test_models\results_new_test"
 )
 
 # ============================================================================
@@ -42,6 +42,7 @@ OUTPUT_DIR = Path(
 # ============================================================================
 
 FEATURES = [
+    'FVC_percent_week0',
     'mean_peripheral_branch_volume_mm3',
     'peripheral_branch_density',
     'mean_peripheral_diameter_mm',
@@ -87,7 +88,7 @@ BEST_CONFIG = {
     # Ridge best
     'ridge_alpha': 5.0,
     # Lasso best
-    'lasso_alpha': 0.1,
+    'lasso_alpha': 0.5,
     # RF best
     'rf_n_estimators': 100,
     'rf_max_depth': 2,
@@ -216,6 +217,12 @@ def test_single_dataset(dataset_name, dataset_path, output_subdir):
         else:
             importance_df = pd.DataFrame()  # DataFrame vuoto se non ci sono importances
         
+        print(f"        ✓ Directory creata: {output_subdir}")
+        print(f"        ✓ loocv_predictions.csv salvato ({len(results_df)} righe)")
+        print(f"        ✓ model_summary.csv salvato ({len(summary_df)} modelli)")
+        if not importance_df.empty:
+            print(f"        ✓ feature_importances.csv salvato ({len(importance_df)} righe)")
+        
         # 5. Genera plot
         plot_all_results(
             results_df=results_df,
@@ -225,7 +232,13 @@ def test_single_dataset(dataset_name, dataset_path, output_subdir):
             features=FEATURES
         )
         
-        print(f"        ✓ Risultati salvati in: {output_subdir.name}/")
+        # Mostra percorso completo relativo alla working directory
+        try:
+            rel_path = output_subdir.relative_to(Path.cwd())
+            print(f"        ✓ Risultati salvati in: {rel_path}/")
+        except ValueError:
+            # Se non riesce a calcolare il percorso relativo, usa quello assoluto
+            print(f"        ✓ Risultati salvati in: {output_subdir}/")
         
         '''return {
             'dataset_name': dataset_name,
@@ -648,15 +661,14 @@ def main():
     print(f"  TEST COMPLETATI: {len(all_results)}/{len(DATASETS)} dataset")
     print(f"{'='*80}")
     
-    # Crea tabella riassuntiva (unico output comparativo)
-    # summary_df = create_summary_table(all_results, OUTPUT_DIR)
+    # Crea tabella riassuntiva
     summary_df, summary_long = create_summary_table(all_results, OUTPUT_DIR)
     
     # Report finale
     print(f"\n{'='*80}")
     print("  ANALISI COMPLETA")
     print(f"{'='*80}")
-    print(f"\n  📁 Directory output: {OUTPUT_DIR}")
+    print(f"\n  📁 Directory output: {OUTPUT_DIR.absolute()}")
     
     # Mostra best dataset solo se la tabella non è vuota
     if not summary_df.empty and len(summary_df) > 0:
@@ -675,11 +687,24 @@ def main():
         except Exception as e:
             print(f"  ⚠ Impossibile mostrare best dataset: {e}")
     
-    print(f"\n  📂 Sottodirectory per dataset:")
+    print(f"\n  📂 Sottodirectory create (percorsi completi):")
     for result in all_results:
+        subdir = OUTPUT_DIR / result['dataset_name']
         print(f"     • {result['dataset_name']}/")
+        print(f"       → {subdir.absolute()}")
     
-    print(f"\n  📄 Tabella riassuntiva: overall_summary.csv")
+    print(f"\n  📄 File riassuntivi (nella directory principale):")
+    print(f"     • {OUTPUT_DIR.absolute()}/")
+    print(f"       → overall_summary.csv (best model per dataset)")
+    print(f"       → overall_summary_all_models.csv (tutti i modelli)")
+    print(f"       → overall_summary_pivot_r2.csv (pivot R² per modello)")
+    
+    print(f"\n{'='*80}\n")
+    print(f"\n  📊 Plot comparativi:")
+    print(f"     • comparison_metrics_barplot.png")
+    print(f"     • comparison_r2_vs_size.png")
+    print(f"     • comparison_feature_importance_heatmap.png")
+    print(f"     • comparison_error_distributions.png")
     
     print(f"\n{'='*80}\n")
 

@@ -1,8 +1,0 @@
-Model,R²,MAE,RMSE
-Ensemble,0.4075,11.94,15.29
-Random Forest,0.3947,12.23,15.46
-Ridge,0.3591,12.38,15.91
-Lasso,0.3118,12.77,16.48
-XGBoost,0.2617,14.56,17.07
-Linear Regression,-0.1078,16.46,20.91
-MLP,-1.9259,30.6,33.99
