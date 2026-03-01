@@ -18,7 +18,7 @@ from evaluation.visualization import plot_all_results
 # CONFIGURAZIONE PATHS
 # ============================================================================
 
-BASE_DIR = Path(r"/content/airway_analysis/validation_pipeline/OSIC_metrics_validation")
+BASE_DIR = Path(r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\OSIC_metrics_validation")
 
 # Dataset da unified_prediction/
 UNIFIED_DIR = BASE_DIR / "unified_prediction"
@@ -33,8 +33,7 @@ DATASETS = {
 
 # Output
 OUTPUT_DIR = Path(
-    r"airway_analysis/validation_pipeline"
-    r"/validation_test_models/week52pred_dataset_comparison"
+    r"X:\Francesca Saglimbeni\tesi\vesselsegmentation\validation_pipeline\validation_test_models\results_old_0.1"
 )
 
 # ============================================================================

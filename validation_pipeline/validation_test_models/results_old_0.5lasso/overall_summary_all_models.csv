@@ -1,0 +1,41 @@
+Dataset,N_Patients,Model,R2,MAE,RMSE
+strict,22,Ensemble (Ridge+RF),0.3017,12.12,14.82
+strict,22,"Ridge (L2 reg, α=5.0)",0.1976,12.59,15.89
+strict,22,Random Forest,0.3568,11.68,14.23
+strict,22,XGBoost,0.3072,12.15,14.77
+strict,22,"Lasso (L1 reg, α=0.5)",0.0567,13.71,17.23
+strict,22,LR (multi-feature),-0.0471,14.18,18.15
+strict,22,MLP (multi-feature),-1.5795,24.38,28.49
+strict,22,LR (best single),-0.1961,15.04,19.4
+balanced,32,Ensemble (Ridge+RF),0.4075,11.94,15.29
+balanced,32,"Ridge (L2 reg, α=5.0)",0.3591,12.38,15.91
+balanced,32,Random Forest,0.3947,12.23,15.46
+balanced,32,XGBoost,0.2617,14.56,17.07
+balanced,32,"Lasso (L1 reg, α=0.5)",0.3118,12.77,16.48
+balanced,32,LR (multi-feature),0.2712,13.59,16.96
+balanced,32,MLP (multi-feature),-1.9259,30.6,33.99
+balanced,32,LR (best single),-0.1078,16.46,20.91
+all,34,Ensemble (Ridge+RF),0.4162,11.72,14.9
+all,34,"Ridge (L2 reg, α=5.0)",0.3631,12.11,15.57
+all,34,Random Forest,0.4017,12.24,15.09
+all,34,XGBoost,0.2772,13.98,16.58
+all,34,"Lasso (L1 reg, α=0.5)",0.3206,12.46,16.08
+all,34,LR (multi-feature),0.2851,13.12,16.49
+all,34,MLP (multi-feature),-1.6442,27.64,31.72
+all,34,LR (best single),-0.121,16.32,20.65
+traditional_only,32,Ensemble (Ridge+RF),0.4075,11.94,15.29
+traditional_only,32,"Ridge (L2 reg, α=5.0)",0.3591,12.38,15.91
+traditional_only,32,Random Forest,0.3947,12.23,15.46
+traditional_only,32,XGBoost,0.2617,14.56,17.07
+traditional_only,32,"Lasso (L1 reg, α=0.5)",0.3118,12.77,16.48
+traditional_only,32,LR (multi-feature),0.2712,13.59,16.96
+traditional_only,32,MLP (multi-feature),-1.9259,30.6,33.99
+traditional_only,32,LR (best single),-0.1078,16.46,20.91
+both_targets,32,Ensemble (Ridge+RF),0.4075,11.94,15.29
+both_targets,32,"Ridge (L2 reg, α=5.0)",0.3591,12.38,15.91
+both_targets,32,Random Forest,0.3947,12.23,15.46
+both_targets,32,XGBoost,0.2617,14.56,17.07
+both_targets,32,"Lasso (L1 reg, α=0.5)",0.3118,12.77,16.48
+both_targets,32,LR (multi-feature),0.2712,13.59,16.96
+both_targets,32,MLP (multi-feature),-1.9259,30.6,33.99
+both_targets,32,LR (best single),-0.1078,16.46,20.91

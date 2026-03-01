@@ -1,0 +1,6 @@
+Rank,Dataset,N_Patients,Best_Model,Best_R2,Best_MAE,Best_RMSE
+1,all,34,Ensemble (Ridge+RF),0.4162,11.72,14.9
+2,traditional_only,32,Ensemble (Ridge+RF),0.4075,11.94,15.29
+3,balanced,32,Ensemble (Ridge+RF),0.4075,11.94,15.29
+4,both_targets,32,Ensemble (Ridge+RF),0.4075,11.94,15.29
+5,strict,22,Random Forest,0.3568,11.68,14.23
