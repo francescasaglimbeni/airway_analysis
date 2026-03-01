@@ -125,7 +125,7 @@ def main():
         print("  RISULTATI AGGREGATI")
         print(f"{'='*70}")
         
-        summary_df = compute_aggregate_metrics(results_df)
+        summary_df = compute_aggregate_metrics(results_df, config=config)
         print(f"\n{summary_df.to_string(index=False)}")
         
         # Salva metriche
@@ -176,7 +176,8 @@ def main():
             importances=all_importances,
             fold_curves=fold_curves,
             output_dir=OUTPUT_DIR,
-            features=FEATURES
+            features=FEATURES,
+            config=config
         )
         
         # 6. Report finale

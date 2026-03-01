@@ -183,7 +183,7 @@ def test_single_dataset(dataset_name, dataset_path, output_subdir):
                 
         # 3. Calcola metriche
         print(f"\n  [3/4] Calcolo metriche aggregate...")
-        summary_df = compute_aggregate_metrics(results_df)
+        summary_df = compute_aggregate_metrics(results_df, config=BEST_CONFIG)
         
         # Estrai metriche MLP
         '''mlp_row = summary_df[summary_df['Model'] == 'MLP (multi-feature)']
@@ -229,7 +229,8 @@ def test_single_dataset(dataset_name, dataset_path, output_subdir):
             importances=all_importances,
             fold_curves=fold_curves,
             output_dir=output_subdir,
-            features=FEATURES
+            features=FEATURES,
+            config=BEST_CONFIG
         )
         
         # Mostra percorso completo relativo alla working directory

@@ -11,7 +11,7 @@ from scipy.stats import pearsonr
 from matplotlib.patches import Patch
 
 
-def plot_all_results(results_df, importances, fold_curves, output_dir, features):
+def plot_all_results(results_df, importances, fold_curves, output_dir, features, config=None):
     """
     Genera tutte le visualizzazioni.
     
@@ -21,11 +21,12 @@ def plot_all_results(results_df, importances, fold_curves, output_dir, features)
         fold_curves: Lista di dizionari con curve di training
         output_dir: Directory di output
         features: Lista delle feature
+        config: Dict con configurazione (opzionale, per nomi modelli dinamici)
     """
     print("  Generazione visualizzazioni...")
     
     # Plot 1: Actual vs Predicted
-    plot_actual_vs_predicted(results_df, output_dir)
+    plot_actual_vs_predicted(results_df, output_dir, config)
     
     # Plot 2: Bland-Altman
     plot_bland_altman(results_df, output_dir)
@@ -48,7 +49,7 @@ def plot_all_results(results_df, importances, fold_curves, output_dir, features)
     print("  ✓ Tutte le visualizzazioni generate")
 
 
-def plot_actual_vs_predicted(results_df, output_dir):
+def plot_actual_vs_predicted(results_df, output_dir, config=None):
     """Scatter: actual vs predicted per tutti i modelli."""
     fig, axes = plt.subplots(2, 4, figsize=(20, 10))
     fig.suptitle('FVC% Week 52 — Actual vs Predicted (LOOCV)',
@@ -56,11 +57,21 @@ def plot_actual_vs_predicted(results_df, output_dir):
     
     actual = results_df['actual'].values
     
+    # Costruisci nomi dinamicamente se config è fornito
+    if config is not None:
+        lasso_alpha = config.get('lasso_alpha', 0.1)
+        ridge_alpha = config.get('ridge_alpha', 1.0)
+        lasso_title = f'Lasso Regression\n[L1 reg, α={lasso_alpha}]'
+        ridge_title = f'Ridge Regression\n[L2 reg, α={ridge_alpha}]'
+    else:
+        lasso_title = 'Lasso Regression\n[L1 reg, α=0.1]'
+        ridge_title = 'Ridge Regression\n[L2 reg, tuned α]'
+    
     configs = [
         ('ensemble_pred', '⭐ Ensemble\n(Ridge 60% + RF 40%)', 'darkviolet', axes[0, 0]),
-        ('ridge_pred', 'Ridge Regression\n[L2 reg, tuned α]', 'forestgreen', axes[0, 1]),
+        ('ridge_pred', ridge_title, 'forestgreen', axes[0, 1]),
         ('rf_pred', 'Random Forest\n[n=100, depth=3]', 'darkorange', axes[0, 2]),
-        ('lasso_pred', 'Lasso Regression\n[L1 reg, α=0.1]', 'purple', axes[0, 3]),
+        ('lasso_pred', lasso_title, 'purple', axes[0, 3]),
         ('lr_multi_pred', 'Linear Regression\n[No Regularization]', 'coral', axes[1, 0]),
         ('mlp_pred', 'MLP (multi-feature)\n[Deep Learning - FAILURE]', 'steelblue', axes[1, 1]),
         ('best_single_pred', 'Best Single Feature\n[Linear]', 'gray', axes[1, 2]),

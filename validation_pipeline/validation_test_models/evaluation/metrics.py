@@ -6,23 +6,35 @@ from scipy.stats import pearsonr
 from models.train_utils import predict_mlp
 
 
-def compute_aggregate_metrics(results_df):
+def compute_aggregate_metrics(results_df, config=None):
     """
     Calcola R², MAE, RMSE per ogni modello.
     
     Args:
         results_df: DataFrame con risultati LOOCV
+        config: Dict con configurazione (opzionale, per nomi modelli dinamici)
     
     Returns:
         summary_df: DataFrame con metriche aggregate
     """
     actual = results_df['actual'].values
+    
+    # Costruisci nomi dei modelli dinamicamente se config è fornito
+    if config is not None:
+        lasso_alpha = config.get('lasso_alpha', 0.1)
+        ridge_alpha = config.get('ridge_alpha', 1.0)
+        lasso_name = f'Lasso (L1 reg, α={lasso_alpha})'
+        ridge_name = f'Ridge (L2 reg, α={ridge_alpha})'
+    else:
+        lasso_name = 'Lasso (L1 reg, α=0.1)'
+        ridge_name = 'Ridge (L2 reg, tuned α)'
+    
     models = {
         'Ensemble (Ridge+RF)': results_df['ensemble_pred'].values,
-        'Ridge (L2 reg, tuned α)': results_df['ridge_pred'].values,
+        ridge_name: results_df['ridge_pred'].values,
         'Random Forest': results_df['rf_pred'].values,
         'XGBoost': results_df['xgb_pred'].values if 'xgb_pred' in results_df.columns else np.full(len(actual), np.nan),
-        'Lasso (L1 reg, α=0.1)': results_df['lasso_pred'].values,
+        lasso_name: results_df['lasso_pred'].values,
         'LR (multi-feature)': results_df['lr_multi_pred'].values,
         'MLP (multi-feature)': results_df['mlp_pred'].values,
         'LR (best single)': results_df['best_single_pred'].values,
