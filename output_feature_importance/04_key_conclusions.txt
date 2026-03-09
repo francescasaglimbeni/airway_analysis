@@ -1,33 +1,36 @@
 ====================================================================================================
-CONCLUSIONI SUPPORTATE DAI DATI
+CONCLUSIONS SUPPORTED BY DATA
 ====================================================================================================
 
-1. VOLUME MEDIO DEI RAMI PERIFERICI E DENSITÀ PERIFERICA:
-   ✓ Mostrano le più forti correlazioni positive durante il test (r=0.47, r≈0.39)
-   ✓ Consistenti across multiple datasets (stabilità media-alta)
-   ✓ Particolarmente rilevanti per il dataset 'decline_only' e 'strict'
+1. GLOBAL DENSITY MEASURES (Histogram Entropy, Mean Lung Density):
+   ✓ Show strongest univariate correlations with FVC (|r| ≈ 0.59-0.68)
+   ✓ Highest individual predictive power (R² ≈ 0.31-0.41)
+   ✗ BUT exhibit high variability across datasets (CV ≈ 0.34-0.40)
+   → Interpretation: Sample-dependent, less generalizable patterns
 
-2. ENTROPIA DELL'ISTOGRAMMA:
-   ✓ Nel ranking tree-based al primo posto (R²=0.408)
-   ✓ Però mostra variabilità across datasets (Coefficient of Variation=0.338)
-   ✓ Forte correlazione negativa globale (r=-0.68, p<0.001)
-   ✓ Supporta l'affermazione di 'importanza variabile'
+2. PERIPHERAL STRUCTURE MEASURES (Volume, Density, Diameter):
+   ✓ Show weaker univariate correlations (|r| ≈ 0.17-0.47)
+   ✓ BUT demonstrate SUPERIOR stability across datasets (CV ≈ 0.07-0.14)
+   ✓ More robust and reliable patterns
+   → Interpretation: Trade-off between weak univariate signal and high robustness
 
-3. RAPPORTO CENTRALE/PERIFERICO:
-   ✓ Correlazione moderata stabile (r=-0.30)
-   ✓ Bassa variabilità across datasets (stabilità media-alta)
-   ✓ Importanza inferiore ma coerente
+3. CENTRAL-TO-PERIPHERAL DIAMETER RATIO:
+   ✓ Consistent moderate correlation (|r| ≈ 0.30)
+   ✓ Stable across datasets (CV ≈ 0.29)
+   ✓ Reliable but lower-magnitude predictor
 
-4. SUPERIORITÀ DELLE MISURE PERIFERICHE:
-   ✓ Le misure Periferiche offrono:
-      - Stabilità superiore (CV=0.071 vs 0.403 per densità globali)
-      - Variabilità minore tra dataset diversi
-      - Segnale diagnostico più interpretabile e specifico
+4. THE CENTRAL PARADOX:
+   • Global density measures show STRONG univariate correlation with FVC (r ≈ 0.64)
+   • Yet FAIL to translate into robust multivariate predictive power
+   • Without baseline FVC information, single-feature models achieve R² ≈ 0.31-0.41
+   • This pattern reveals:
+      - The importance of feature combinations and ensemble effects
+      - Why robust, stable features matter more than high univariate correlation
+      - Fundamental limits of univariate signal in small-sample multivariate prediction
 
-INTERPRETAZIONE:
-L'affermazione nel testo è supportata dai dati empirici. Sebbene le misure di densità globale
-mostrino correlazioni numericamente più forti in alcuni contesti, le misure periferiche
-(volume medio dei rami, densità periferica) offrono un segnale diagnostico più:
-- STABILE across diversi dataset
-- ROBUSTO (meno variabile)
-- SPECIFICO per la struttura polmonare periferica
+KEY TAKEAWAY:
+While global density measures display stronger individual correlations with FVC decline,
+peripheral structure measurements (volume, density, diameter) offer superior generalizability
+and robustness across different dataset configurations. This suggests that for practical
+clinical prediction, stable features with moderate univariate signal are preferable to
+strong but unstable features, particularly in small-sample scenarios.

@@ -1,20 +1,20 @@
 ====================================================================================================
-ANALISI DELL'IMPORTANZA DELLE FEATURE NELLA PREDIZIONE DEL FVC A 52 SETTIMANE
-Supporto Empirico dai Modelli Tree-Based
+FEATURE IMPORTANCE ANALYSIS IN FVC WEEK-52 PREDICTION
+Empirical Support from Tree-Based Models
 ====================================================================================================
 
-CORRELAZIONE CON FVC (PEARSON R) - Tutti gli endpoint
+PEARSON CORRELATION WITH FVC - All Endpoints
 ====================================================================================================
-histogram_entropy                        | r=-0.6834 *** | p=2.15e-48 | Type: parenchymal
-mean_lung_density_HU                     | r=-0.6443 *** | p=1.70e-41 | Type: parenchymal
-mean_peripheral_branch_volume_mm3        | r= 0.4707 *** | p=9.30e-21 | Type: airway_peripheral
-central_to_peripheral_diameter_ratio     | r=-0.2994 *** | p=1.06e-08 | Type: airway_peripheral
-mean_tortuosity                          | r=-0.2421 *** | p=4.47e-06 | Type: airway
-volume_ml                                | r= 0.2269 *** | p=1.78e-05 | Type: airway
-std_peripheral_diameter_mm               | r= 0.1629 **  | p=2.21e-03 | Type: airway_peripheral
+histogram_entropy                        | r=-0.6834 *** | p=2.15e-48
+mean_lung_density_HU                     | r=-0.6443 *** | p=1.70e-41
+mean_peripheral_branch_volume_mm3        | r= 0.4707 *** | p=9.30e-21
+central_to_peripheral_diameter_ratio     | r=-0.2994 *** | p=1.06e-08
+mean_tortuosity                          | r=-0.2421 *** | p=4.47e-06
+volume_ml                                | r= 0.2269 *** | p=1.78e-05
+std_peripheral_diameter_mm               | r= 0.1629 **  | p=2.21e-03
 
 ====================================================================================================
-FEATURE RANKING A 52 SETTIMANE (MODELLI TREE-BASED)
+FEATURE RANKING AT WEEK 52 (TREE-BASED MODELS)
 ====================================================================================================
  Rank                              Feature     R²   MAE  Pearson r
     1                    histogram_entropy  0.408 13.35       0.64
@@ -25,7 +25,7 @@ FEATURE RANKING A 52 SETTIMANE (MODELLI TREE-BASED)
     6          mean_peripheral_diameter_mm -0.120 16.41      -0.03
 
 ====================================================================================================
-STABILITÀ DELLE FEATURE ACROSS DATASETS
+FEATURE STABILITY ACROSS DATASETS
 ====================================================================================================
                                       Mean Correlation  Std Dev (Stability)  Coefficient of Variation
 central_to_peripheral_diameter_ratio            0.4718               0.0397                    0.0841
