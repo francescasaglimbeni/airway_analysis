@@ -1,0 +1,36 @@
+====================================================================================================
+ANALISI DELL'IMPORTANZA DELLE FEATURE NELLA PREDIZIONE DEL FVC A 52 SETTIMANE
+Supporto Empirico dai Modelli Tree-Based
+====================================================================================================
+
+CORRELAZIONE CON FVC (PEARSON R) - Tutti gli endpoint
+====================================================================================================
+histogram_entropy                        | r=-0.6834 *** | p=2.15e-48 | Type: parenchymal
+mean_lung_density_HU                     | r=-0.6443 *** | p=1.70e-41 | Type: parenchymal
+mean_peripheral_branch_volume_mm3        | r= 0.4707 *** | p=9.30e-21 | Type: airway_peripheral
+central_to_peripheral_diameter_ratio     | r=-0.2994 *** | p=1.06e-08 | Type: airway_peripheral
+mean_tortuosity                          | r=-0.2421 *** | p=4.47e-06 | Type: airway
+volume_ml                                | r= 0.2269 *** | p=1.78e-05 | Type: airway
+std_peripheral_diameter_mm               | r= 0.1629 **  | p=2.21e-03 | Type: airway_peripheral
+
+====================================================================================================
+FEATURE RANKING A 52 SETTIMANE (MODELLI TREE-BASED)
+====================================================================================================
+ Rank                              Feature     R²   MAE  Pearson r
+    1                    histogram_entropy  0.408 13.35       0.64
+    2                 mean_lung_density_HU  0.315 11.74       0.59
+    3            peripheral_branch_density  0.002 15.18       0.17
+    4 central_to_peripheral_diameter_ratio -0.039 16.48       0.09
+    5    mean_peripheral_branch_volume_mm3 -0.109 16.51      -0.10
+    6          mean_peripheral_diameter_mm -0.120 16.41      -0.03
+
+====================================================================================================
+STABILITÀ DELLE FEATURE ACROSS DATASETS
+====================================================================================================
+                                      Mean Correlation  Std Dev (Stability)  Coefficient of Variation
+central_to_peripheral_diameter_ratio            0.4718               0.0397                    0.0841
+mean_lung_density_HU                            0.2563               0.1034                    0.4033
+histogram_entropy                               0.2483               0.0839                    0.3377
+mean_peripheral_branch_volume_mm3              -0.2423               0.0172                    0.0710
+mean_peripheral_diameter_mm                    -0.2411               0.0273                    0.1132
+peripheral_branch_density                       0.1462               0.0123                    0.0841

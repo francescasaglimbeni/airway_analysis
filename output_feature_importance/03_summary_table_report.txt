@@ -1,0 +1,39 @@
+============================================================================================================================================
+TABELLA RIASSUNTIVA: EVIDENZA EMPIRICA PER IL SUPPORTO DELL'AFFERMAZIONE
+============================================================================================================================================
+                             Feature           Category  Pearson r      |r|      p-value Significant  Mean Corr (Multi-Dataset)  Std Dev Stability       CV  In correlation_results
+                   histogram_entropy     Global Density  -0.683435 0.683435 2.146792e-48         ***                   0.248323 0.083854    Medium 0.337682                    True
+                mean_lung_density_HU     Global Density  -0.644266 0.644266 1.704246e-41         ***                   0.256313 0.103378    Medium 0.403326                    True
+   mean_peripheral_branch_volume_mm3         Peripheral   0.470742 0.470742 9.295518e-21         ***                  -0.242287 0.017202      High 0.070999                    True
+central_to_peripheral_diameter_ratio Central/Peripheral  -0.299379 0.299379 1.061587e-08         ***                   0.471817 0.039673      High 0.084085                    True
+           peripheral_branch_density         Peripheral        NaN      NaN          NaN         N/A                   0.146231 0.012298      High 0.084101                   False
+         mean_peripheral_diameter_mm         Peripheral        NaN      NaN          NaN         N/A                  -0.241070 0.027288      High 0.113194                   False
+
+====================================================================================================
+STATISTICHE AGGREGATE PER CATEGORIA
+====================================================================================================
+
+Peripheral:
+  N. Features: 3
+  Mean |r|: 0.4707
+  Std Dev of |r|: nan
+  Mean Multi-Dataset Corr: -0.1124
+  Features with Significant Correlations (p<0.05): 1/3
+  Stability Profile: High
+
+Global Density:
+  N. Features: 2
+  Mean |r|: 0.6639
+  Std Dev of |r|: 0.0277
+  Mean Multi-Dataset Corr: 0.2523
+  Features with Significant Correlations (p<0.05): 2/2
+  Stability Profile: Medium
+
+Central/Peripheral:
+  N. Features: 1
+  Mean |r|: 0.2994
+  Std Dev of |r|: nan
+  Mean Multi-Dataset Corr: 0.4718
+  Features with Significant Correlations (p<0.05): 1/1
+  Stability Profile: High
+

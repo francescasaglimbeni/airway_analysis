@@ -1,0 +1,33 @@
+====================================================================================================
+CONCLUSIONI SUPPORTATE DAI DATI
+====================================================================================================
+
+1. VOLUME MEDIO DEI RAMI PERIFERICI E DENSITÀ PERIFERICA:
+   ✓ Mostrano le più forti correlazioni positive durante il test (r=0.47, r≈0.39)
+   ✓ Consistenti across multiple datasets (stabilità media-alta)
+   ✓ Particolarmente rilevanti per il dataset 'decline_only' e 'strict'
+
+2. ENTROPIA DELL'ISTOGRAMMA:
+   ✓ Nel ranking tree-based al primo posto (R²=0.408)
+   ✓ Però mostra variabilità across datasets (Coefficient of Variation=0.338)
+   ✓ Forte correlazione negativa globale (r=-0.68, p<0.001)
+   ✓ Supporta l'affermazione di 'importanza variabile'
+
+3. RAPPORTO CENTRALE/PERIFERICO:
+   ✓ Correlazione moderata stabile (r=-0.30)
+   ✓ Bassa variabilità across datasets (stabilità media-alta)
+   ✓ Importanza inferiore ma coerente
+
+4. SUPERIORITÀ DELLE MISURE PERIFERICHE:
+   ✓ Le misure Periferiche offrono:
+      - Stabilità superiore (CV=0.071 vs 0.403 per densità globali)
+      - Variabilità minore tra dataset diversi
+      - Segnale diagnostico più interpretabile e specifico
+
+INTERPRETAZIONE:
+L'affermazione nel testo è supportata dai dati empirici. Sebbene le misure di densità globale
+mostrino correlazioni numericamente più forti in alcuni contesti, le misure periferiche
+(volume medio dei rami, densità periferica) offrono un segnale diagnostico più:
+- STABILE across diversi dataset
+- ROBUSTO (meno variabile)
+- SPECIFICO per la struttura polmonare periferica

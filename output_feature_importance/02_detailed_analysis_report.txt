@@ -1,0 +1,25 @@
+====================================================================================================
+ANALISI DETTAGLIATA DI STABILITÀ E VARIABILITÀ ACROSS DATASETS
+====================================================================================================
+
+FEATURE PERIFERICHE (Peripheral Structure):
+----------------------------------------------------------------------------------------------------
+  mean_peripheral_branch_volume_mm3             | Mean Corr: -0.2423 | Std Dev:  0.0172 | CV:  0.0710
+  peripheral_branch_density                     | Mean Corr:  0.1462 | Std Dev:  0.0123 | CV:  0.0841
+  mean_peripheral_diameter_mm                   | Mean Corr: -0.2411 | Std Dev:  0.0273 | CV:  0.1132
+
+MISURE DI DENSITÀ GLOBALE (Global Density):
+----------------------------------------------------------------------------------------------------
+  mean_lung_density_HU                          | Mean Corr:  0.2563 | Std Dev:  0.1034 | CV:  0.4033
+  histogram_entropy                             | Mean Corr:  0.2483 | Std Dev:  0.0839 | CV:  0.3377
+
+RAPPORTO CENTRALE/PERIFERICO:
+----------------------------------------------------------------------------------------------------
+  central_to_peripheral_diameter_ratio          | Mean Corr:  0.4718 | Std Dev:  0.0397 | CV:  0.0841
+
+====================================================================================================
+COMPARAZIONE CATEGORIE DI FEATURE
+====================================================================================================
+Peripheral Structure - Mean |Correlation|: 0.2099
+Global Density - Mean |Correlation|:       0.2523
+Central/Peripheral - Mean |Correlation|:   0.4718
