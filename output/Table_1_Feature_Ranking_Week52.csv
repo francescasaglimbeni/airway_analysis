@@ -1,7 +1,0 @@
-Rank,Feature,R²,MAE,Pearson r
-1,histogram_entropy,0.408,13.35,0.64
-2,mean_lung_density_HU,0.315,11.74,0.59
-3,peripheral_branch_density,0.002,15.18,0.17
-4,central_to_peripheral_diameter_ratio,-0.039,16.48,0.09
-5,mean_peripheral_branch_volume_mm3,-0.109,16.51,-0.10
-6,mean_peripheral_diameter_mm,-0.120,16.41,-0.03
